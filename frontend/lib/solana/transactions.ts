@@ -12,7 +12,7 @@ export interface TransactionResult {
  */
 export async function signAndSendTransaction(
   wallet: WalletContextState,
-  transaction: Transaction | VersionedTransaction,
+  transaction: any, // Use any to avoid type conflicts between different @solana/web3.js versions
   connection: Connection
 ): Promise<TransactionResult> {
   try {

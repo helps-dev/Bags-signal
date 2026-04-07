@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import AppShell from '../components/AppShell'
-import { Bell, Settings as SettingsIcon, Save } from 'lucide-react'
+import { Bell, Settings as SettingsIcon, Check } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
 
 export default function SettingsPage() {
@@ -185,7 +185,7 @@ export default function SettingsPage() {
               {isSaving ? (
                 <span className="h-5 w-5 animate-spin rounded-full border-2 border-on-primary-container border-t-transparent" />
               ) : (
-                <Save className="h-5 w-5" />
+                <Check className="h-5 w-5" />
               )}
               {isSaving ? 'Saving...' : 'Save Settings'}
             </button>
