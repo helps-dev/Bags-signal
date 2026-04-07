@@ -5,7 +5,7 @@ dotenv.config();
 
 const configSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).default(3001),
+  PORT: z.string().transform(val => parseInt(val, 10)).default(3001),
   BAGS_API_KEY: z.string().min(1, 'BAGS_API_KEY is required'),
   BAGS_API_BASE_URL: z.string().url().default('https://public-api-v2.bags.fm/api/v1'),
   REDIS_URL: z.string().optional(),
