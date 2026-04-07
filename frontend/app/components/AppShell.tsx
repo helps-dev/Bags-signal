@@ -180,20 +180,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )
           })}
         </nav>
-        <div className="mt-auto px-6">
-          <div className="relative overflow-hidden rounded-xl border border-white/5 bg-surface-container p-4">
-            <div className="relative z-10">
-              <div className="mb-2 text-xs text-white/60">PRO PLAN</div>
-              <div className="mb-4 text-sm font-bold text-white">Unlimited Alpha Access</div>
-              <button
-                type="button"
-                className="w-full rounded-lg border border-white/10 bg-white/5 py-2 text-xs text-white transition-colors hover:bg-white/10"
-              >
-                Upgrade to Pro
-              </button>
+        {/* Pro Plan section hidden for now */}
+        {false && (
+          <div className="mt-auto px-6">
+            <div className="relative overflow-hidden rounded-xl border border-white/5 bg-surface-container p-4">
+              <div className="relative z-10">
+                <div className="mb-2 text-xs text-white/60">PRO PLAN</div>
+                <div className="mb-4 text-sm font-bold text-white">Unlimited Alpha Access</div>
+                <button
+                  type="button"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 py-2 text-xs text-white transition-colors hover:bg-white/10"
+                >
+                  Upgrade to Pro
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </aside>
 
       <main className="min-h-screen pt-16 md:ml-64">{children}</main>
