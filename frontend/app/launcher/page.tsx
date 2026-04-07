@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState } from 'react'
 import AppShell from '../components/AppShell'
 import { Check, ChevronRight, Rocket } from 'lucide-react'
