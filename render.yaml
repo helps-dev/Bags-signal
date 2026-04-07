@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: bags-signal-backend
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: BAGS_API_KEY
+        sync: false
+      - key: BAGS_API_BASE_URL
+        value: https://public-api-v2.bags.fm/api/v1
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: HELIUS_RPC_URL
+        value: https://mainnet.helius-rpc.com
+      - key: HELIUS_API_KEY
+        sync: false
+      - key: BIRDEYE_API_KEY
+        sync: false
+      - key: AI_SERVICE_URL
+        value: http://localhost:8000
