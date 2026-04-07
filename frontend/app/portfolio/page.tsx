@@ -114,17 +114,6 @@ export default function PortfolioPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-      })
-      
-      if (!res.ok) throw new Error('Claim failed')
-      alert('Fees claimed successfully!')
-    } catch (e: any) {
-      console.error(e)
-      alert(`Error claiming fees: ${e.message}`)
-    } finally {
-      setIsLoading(false)
-    }
   }
 
   return (

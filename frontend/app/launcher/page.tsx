@@ -92,9 +92,6 @@ export default function TokenLauncherPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-      setIsLoading(false)
-    }
   }
 
   return (
