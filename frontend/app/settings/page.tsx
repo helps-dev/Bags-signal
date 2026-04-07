@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import AppShell from '../components/AppShell'
-import { Bell, Globe, Save } from 'lucide-react'
+import { Bell, Settings as SettingsIcon, Save } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
 
 export default function SettingsPage() {
@@ -113,7 +113,7 @@ export default function SettingsPage() {
           {/* RPC Settings */}
           <div className="glass-card rounded-xl p-6">
             <div className="mb-4 flex items-center gap-3">
-              <Globe className="h-5 w-5 text-secondary-container" />
+              <SettingsIcon className="h-5 w-5 text-secondary-container" />
               <h2 className="font-headline text-xl font-bold text-white">RPC Settings</h2>
             </div>
             
