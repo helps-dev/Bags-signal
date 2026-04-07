@@ -28,26 +28,47 @@ function sendError(res: any, error: unknown, fallback = 'Unexpected error') {
 router.get('/feed', async (_req, res) => {
   try {
     const cacheKey = 'signal:feed';
-    const cached = await cache.get(cacheKey);
-
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed)) {
-        lastFeedSnapshot = parsed;
+    
+    // Try to get from cache
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          lastFeedSnapshot = parsed;
+          return res.json(parsed);
+        }
       }
-      return res.json(parsed);
+    } catch (cacheError) {
+      // Cache error, continue to fetch fresh data
+      console.error('[Signal Feed] Cache parse error:', cacheError);
     }
 
+    // Fetch fresh data from Bags API
     const feed = await bagsService.getTokenFeed();
+    
+    if (!Array.isArray(feed)) {
+      throw new Error('Invalid feed data: not an array');
+    }
+    
     lastFeedSnapshot = feed;
 
-    await cache.set(cacheKey, JSON.stringify(feed), 60);
+    // Try to cache the result
+    try {
+      await cache.set(cacheKey, JSON.stringify(feed), 60);
+    } catch (cacheError) {
+      console.error('[Signal Feed] Cache write error:', cacheError);
+    }
 
     res.json(feed);
   } catch (error) {
+    console.error('[Signal Feed] Error:', error);
+    
+    // Return stale data if available
     if (lastFeedSnapshot.length > 0) {
       return res.set('X-Bags-Stale-Feed', '1').json(lastFeedSnapshot);
     }
+    
     return sendError(res, error, 'Failed to fetch signal feed');
   }
 });
