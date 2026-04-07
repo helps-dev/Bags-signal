@@ -1,0 +1,33 @@
+# Render Blueprint for Bags Signal Backend
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: bags-signal-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: BAGS_API_KEY
+        value: bags_prod_bxHG-iyQ5vURf8LWSagP_c63OF6aKesG4HZT0ZIKe5g
+      - key: BAGS_API_BASE_URL
+        value: https://public-api-v2.bags.fm/api/v1
+      - key: HELIUS_RPC_URL
+        value: https://mainnet.helius-rpc.com
+      - key: HELIUS_API_KEY
+        value: c52abbc9-2158-4ff1-8960-b8dcb7b02b1e
+      - key: BIRDEYE_API_KEY
+        value: d2ab9ba897f142a19cb31ab45485c32e
+      - key: AI_SERVICE_URL
+        value: http://localhost:8000
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
