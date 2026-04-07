@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AppShell from '../components/AppShell'
 import { Check, ChevronRight, Rocket } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -12,7 +12,13 @@ const STEPS = ['Token Info', 'Fee Config', 'Launch Settings', 'Review'] as const
 export default function TokenLauncherPage() {
   const [step, setStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
+  const [isWalletReady, setIsWalletReady] = useState(false)
   const { connected, publicKey, signTransaction } = useWallet()
+  
+  // Wait for wallet to be ready
+  useEffect(() => {
+    setIsWalletReady(true)
+  }, [])
   
   const [formData, setFormData] = useState({
     name: '',
@@ -35,7 +41,7 @@ export default function TokenLauncherPage() {
   }
 
   const handleLaunch = async () => {
-    if (!connected || !publicKey) {
+    if (!isWalletReady || !connected || !publicKey) {
       alert('Please connect your wallet first');
       return;
     }
@@ -329,7 +335,7 @@ export default function TokenLauncherPage() {
               <button
                 type="button"
                 onClick={handleLaunch}
-                disabled={isLoading}
+                disabled={isLoading || !isWalletReady}
                 className="flex items-center gap-2 rounded-lg bg-primary-container px-6 py-3 font-bold text-on-primary-container disabled:opacity-50"
               >
                 {isLoading ? (
@@ -337,7 +343,7 @@ export default function TokenLauncherPage() {
                 ) : (
                   <Rocket className="h-4 w-4" />
                 )}
-                {isLoading ? 'Signing…' : (!connected ? 'Connect to Launch' : 'Launch token')}
+                {isLoading ? 'Signing…' : (!isWalletReady || !connected ? 'Connect to Launch' : 'Launch token')}
               </button>
             )}
           </div>
