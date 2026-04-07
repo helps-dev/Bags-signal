@@ -36,28 +36,63 @@ export default function TokenLauncherPage() {
 
   const handleLaunch = async () => {
     if (!connected || !publicKey) {
-      alert('Please connect your wallet first')
-      return
+      alert('Please connect your wallet first');
+      return;
     }
 
-    setIsLoading(true)
+    // Validate form data
+    if (!formData.name || !formData.symbol) {
+      alert('Please fill in token name and symbol');
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      // Simulate Solana transaction signing
-      await new Promise((r) => setTimeout(r, 1500))
-      alert('Demo: Signed transaction with Solana Wallet.')
-      
-      // Simulate API call to backend
+      // Call backend API to launch token
       const res = await fetch('/api/tokens/launch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-      if (!res.ok) throw new Error('Launch failed')
-      alert('Token launched successfully!')
+        body: JSON.stringify({
+          ...formData,
+          creatorWallet: publicKey.toBase58(),
+        })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Launch failed');
+      }
+      
+      const result = await res.json();
+      
+      // Show success message with transaction signature
+      if (result.signature) {
+        alert(`Token launched successfully!\n\nTransaction: ${result.signature}\n\nView on Solscan: https://solscan.io/tx/${result.signature}`);
+      } else {
+        alert('Token launch initiated! Check your wallet for transaction confirmation.');
+      }
+      
+      // Reset form
+      setFormData({
+        name: '',
+        symbol: '',
+        description: '',
+        twitter: '',
+        website: '',
+        feePercentage: 1,
+        recipients: [{ wallet: '', percentage: 100 }],
+        initialBuy: 0,
+        slippage: 5,
+      });
+      setStep(1);
+      
     } catch (e: any) {
-      console.error(e)
-      alert(`Error launching token: ${e.message}`)
+      console.error('Launch error:', e);
+      alert(`Error launching token: ${e.message}`);
     } finally {
+      setIsLoading(false);
+    }
+  };
       setIsLoading(false)
     }
   }

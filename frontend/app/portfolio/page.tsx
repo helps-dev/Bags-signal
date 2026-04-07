@@ -21,43 +21,100 @@ export default function PortfolioPage() {
 
   useEffect(() => {
     const fetchPortfolio = async () => {
-      if (!connected || !publicKey) return
+      if (!connected || !publicKey) {
+        // Reset to empty state when wallet disconnected
+        setPortfolioData({
+          totalFeesSol: 0,
+          totalFeesUsd: 0,
+          claimedSol: 0,
+          pendingSol: 0,
+          tokensLaunched: 0,
+          partnerReferrals: 0,
+          tokens: [],
+          launchedTokensList: []
+        });
+        return;
+      }
       
+      setIsLoading(true);
       try {
-        const res = await fetch(`/api/fees/positions?walletAddress=${publicKey.toBase58()}`)
+        const res = await fetch(`/api/fees/positions?walletAddress=${publicKey.toBase58()}`);
         if (res.ok) {
-          const data = await res.json()
-          if (data && Array.isArray(data.tokens)) {
-            setPortfolioData(data)
-          }
+          const data = await res.json();
+          setPortfolioData(data);
+        } else {
+          console.error('Failed to fetch portfolio:', await res.text());
         }
       } catch (error) {
-        console.error('Failed to fetch portfolio data', error)
+        console.error('Failed to fetch portfolio data', error);
+      } finally {
+        setIsLoading(false);
       }
     }
     
-    fetchPortfolio()
+    fetchPortfolio();
+    
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchPortfolio, 30000);
+    return () => clearInterval(interval);
   }, [connected, publicKey])
 
   const handleClaimAll = async () => {
     if (!connected || !publicKey) {
-      alert('Please connect your wallet first')
-      return
+      alert('Please connect your wallet first');
+      return;
     }
 
-    setIsLoading(true)
+    if (!portfolioData.tokens || portfolioData.tokens.length === 0) {
+      alert('No claimable positions found');
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      // Simulate Solana transaction signing
-      await new Promise((r) => setTimeout(r, 1500))
-      alert('Demo: Sent Solana claim transaction.')
+      // Claim fees for all tokens
+      const claimPromises = portfolioData.tokens.map(async (token: any) => {
+        const res = await fetch('/api/fees/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress: publicKey.toBase58(),
+            tokenMint: token.tokenMint
+          })
+        });
+        
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || 'Claim failed');
+        }
+        
+        return await res.json();
+      });
+
+      const results = await Promise.allSettled(claimPromises);
       
-      const res = await fetch('/api/fees/claim', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          walletAddress: publicKey.toBase58(),
-          tokenMint: 'ALL'
-        })
+      const successful = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+      
+      if (successful > 0) {
+        alert(`Successfully claimed fees for ${successful} token(s)${failed > 0 ? `, ${failed} failed` : ''}`);
+        
+        // Refresh portfolio data
+        const res = await fetch(`/api/fees/positions?walletAddress=${publicKey.toBase58()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPortfolioData(data);
+        }
+      } else {
+        alert('Failed to claim fees. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Claim error:', error);
+      alert(`Error claiming fees: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
       })
       
       if (!res.ok) throw new Error('Claim failed')
