@@ -11,7 +11,16 @@ function sendError(res: any, error: unknown, fallback = 'Unexpected error') {
   const status = typeof error === 'object' && error !== null && 'statusCode' in error
     ? Number((error as any).statusCode)
     : 500;
-  const message = error instanceof Error ? error.message : fallback;
+  
+  let message = fallback;
+  if (error instanceof Error) {
+    message = error.message;
+  } else if (typeof error === 'string') {
+    message = error;
+  } else if (typeof error === 'object' && error !== null && 'message' in error) {
+    message = String((error as any).message);
+  }
+  
   return res.status(status).json({ error: message });
 }
 
