@@ -11,7 +11,6 @@ const SOL_USD = 141
 
 export default function PortfolioPage() {
   const [isLoading, setIsLoading] = useState(false)
-  const [isWalletReady, setIsWalletReady] = useState(false)
   const [portfolioData, setPortfolioData] = useState<any>({
     totalFeesSol: 0,
     tokensLaunched: 0,
@@ -20,14 +19,9 @@ export default function PortfolioPage() {
   })
   const { connected, publicKey, signTransaction } = useWallet()
 
-  // Wait for wallet to be ready
-  useEffect(() => {
-    setIsWalletReady(true)
-  }, [])
-
   useEffect(() => {
     const fetchPortfolio = async () => {
-      if (!isWalletReady || !connected || !publicKey) {
+      if (!connected || !publicKey) {
         // Reset to empty state when wallet disconnected
         setPortfolioData({
           totalFeesSol: 0,
@@ -63,10 +57,10 @@ export default function PortfolioPage() {
     // Refresh every 30 seconds
     const interval = setInterval(fetchPortfolio, 30000);
     return () => clearInterval(interval);
-  }, [connected, publicKey, isWalletReady])
+  }, [connected, publicKey])
 
   const handleClaimAll = async () => {
-    if (!isWalletReady || !connected || !publicKey) {
+    if (!connected || !publicKey) {
       alert('Please connect your wallet first');
       return;
     }
@@ -146,13 +140,13 @@ export default function PortfolioPage() {
             <button
               type="button"
               onClick={handleClaimAll}
-              disabled={isLoading || !isWalletReady}
+              disabled={isLoading || !connected}
               className="rounded-lg bg-primary-container px-6 py-2 text-sm font-bold text-on-primary-container transition-all hover:brightness-110 disabled:opacity-50"
             >
               {isLoading ? (
                 <RefreshCw className="inline h-4 w-4 animate-spin" />
               ) : (
-                (!isWalletReady || !connected ? 'Connect to Claim' : 'Claim all fees')
+                (!connected ? 'Connect to Claim' : 'Claim all fees')
               )}
             </button>
           </div>

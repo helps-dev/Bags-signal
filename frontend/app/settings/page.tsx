@@ -8,7 +8,6 @@ import { useWallet } from '@solana/wallet-adapter-react'
 export default function SettingsPage() {
   const { connected, publicKey } = useWallet()
   const [isSaving, setIsSaving] = useState(false)
-  const [isWalletReady, setIsWalletReady] = useState(false)
   const [settings, setSettings] = useState({
     alertThreshold: 80,
     emailNotifications: false,
@@ -16,11 +15,6 @@ export default function SettingsPage() {
     autoRefresh: true,
     refreshInterval: 30,
   })
-
-  // Wait for wallet to be ready
-  useEffect(() => {
-    setIsWalletReady(true)
-  }, [])
 
   // Load settings from localStorage
   useEffect(() => {
@@ -41,7 +35,7 @@ export default function SettingsPage() {
       localStorage.setItem('bags-signal-settings', JSON.stringify(settings))
       
       // If wallet connected, could also save to backend
-      if (isWalletReady && connected && publicKey) {
+      if (connected && publicKey) {
         await fetch('/api/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -171,7 +165,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Wallet Info */}
-          {isWalletReady && connected && publicKey && (
+          {connected && publicKey && (
             <div className="glass-card rounded-xl p-6">
               <h2 className="mb-4 font-headline text-xl font-bold text-white">Connected Wallet</h2>
               <div className="rounded-lg bg-surface-container p-4">
