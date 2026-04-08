@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Inter, Space_Grotesk } from 'next/font/google'
 import './globals.css'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { Providers } from './components/Providers'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -56,7 +57,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} min-h-screen bg-background font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container`}
       >
-        <ErrorBoundary>{children}</ErrorBoundary>
+        <ErrorBoundary>
+          <Providers>
+            {children}
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   )

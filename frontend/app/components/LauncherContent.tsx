@@ -1,11 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Check, ChevronRight, Rocket, X } from 'lucide-react'
-import { useWallet } from '@solana/wallet-adapter-react'
 import { SignalLoader } from './SignalLoader'
 
 const STEPS = ['Token Info', 'Fee Config', 'Launch Settings', 'Review'] as const
+
+type PhantomProvider = {
+  isPhantom?: boolean
+  publicKey?: { toString: () => string }
+  connect: () => Promise<{ publicKey: { toString: () => string } }>
+  disconnect: () => Promise<void>
+  signTransaction?: (tx: unknown) => Promise<unknown>
+}
+
+function getPhantom(): PhantomProvider | null {
+  if (typeof window === 'undefined') return null
+  return (window as any).solana?.isPhantom ? (window as any).solana : null
+}
 
 export default function LauncherContent() {
   const [step, setStep] = useState(1)
@@ -13,9 +25,9 @@ export default function LauncherContent() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
   const [uploadError, setUploadError] = useState<string>('')
-  const [mounted, setMounted] = useState(false)
-  const wallet = useWallet()
-  
+  const [walletAddress, setWalletAddress] = useState<string | null>(null)
+  const [walletBusy, setWalletBusy] = useState(false)
+
   const [formData, setFormData] = useState({
     name: '',
     symbol: '',
@@ -28,47 +40,63 @@ export default function LauncherContent() {
     slippage: 5,
   })
 
-  // Ensure component is mounted before accessing wallet
+  // Detect wallet on mount
   useEffect(() => {
-    setMounted(true)
+    const phantom = getPhantom()
+    if (!phantom) return
+
+    // Check if already connected
+    if (phantom.publicKey) {
+      setWalletAddress(phantom.publicKey.toString())
+    }
+
+    const handleConnect = () => {
+      if (phantom.publicKey) setWalletAddress(phantom.publicKey.toString())
+    }
+    const handleDisconnect = () => setWalletAddress(null)
+
+    const p = phantom as any
+    p.on?.('connect', handleConnect)
+    p.on?.('disconnect', handleDisconnect)
+
+    return () => {
+      p.off?.('connect', handleConnect)
+      p.off?.('disconnect', handleDisconnect)
+    }
   }, [])
 
-  // Debug wallet connection
-  useEffect(() => {
-    if (mounted) {
-      console.log('Wallet status:', {
-        connected: wallet.connected,
-        connecting: wallet.connecting,
-        publicKey: wallet.publicKey?.toBase58(),
-        wallet: wallet.wallet?.adapter?.name
-      })
+  const connectWallet = useCallback(async () => {
+    const phantom = getPhantom()
+    if (!phantom) {
+      window.open('https://phantom.app/', '_blank', 'noopener,noreferrer')
+      return
     }
-  }, [mounted, wallet.connected, wallet.connecting, wallet.publicKey, wallet.wallet])
+    setWalletBusy(true)
+    try {
+      const resp = await phantom.connect()
+      setWalletAddress(resp.publicKey.toString())
+    } catch (e) {
+      console.error('Wallet connect error:', e)
+    } finally {
+      setWalletBusy(false)
+    }
+  }, [])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setUploadError('Please upload an image file (PNG, JPG, GIF)')
       return
     }
-
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setUploadError('Image size must be less than 5MB')
       return
     }
-
     setUploadError('')
     setImageFile(file)
-
-    // Create preview
     const reader = new FileReader()
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string)
-    }
+    reader.onloadend = () => setImagePreview(reader.result as string)
     reader.readAsDataURL(file)
   }
 
@@ -79,18 +107,16 @@ export default function LauncherContent() {
   }
 
   const handleNext = () => {
-    // Validate step 1
     if (step === 1) {
       if (!formData.name || !formData.symbol) {
-        alert('⚠️ Please fill in token name and symbol');
-        return;
+        alert('Please fill in token name and symbol')
+        return
       }
       if (!imageFile) {
-        alert('⚠️ Please upload a token image');
-        return;
+        alert('Please upload a token image')
+        return
       }
     }
-    
     if (step < 4) setStep(step + 1)
   }
 
@@ -99,42 +125,21 @@ export default function LauncherContent() {
   }
 
   const handleLaunch = async () => {
-    if (!mounted) {
-      alert('⚠️ Please wait for the page to fully load');
-      return;
+    if (!walletAddress) {
+      await connectWallet()
+      return
     }
-
-    // Better wallet detection
-    console.log('Launch attempt - Wallet state:', {
-      connected: wallet.connected,
-      publicKey: wallet.publicKey?.toBase58(),
-      wallet: wallet.wallet?.adapter?.name
-    });
-
-    if (!wallet.publicKey) {
-      alert('⚠️ Please connect your wallet first!\n\nClick the "Connect Wallet" button in the top right corner.');
-      return;
-    }
-
-    if (!wallet.connected) {
-      alert('⚠️ Wallet is not fully connected. Please try reconnecting your wallet.');
-      return;
-    }
-
-    // Validate form data
     if (!formData.name || !formData.symbol) {
-      alert('⚠️ Please fill in token name and symbol');
-      return;
+      alert('Please fill in token name and symbol')
+      return
     }
-
     if (!imageFile) {
-      alert('⚠️ Please upload a token image');
-      return;
+      alert('Please upload a token image')
+      return
     }
 
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      // Convert image to base64
       const imageBase64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
         reader.onloadend = () => resolve(reader.result as string)
@@ -142,108 +147,97 @@ export default function LauncherContent() {
         reader.readAsDataURL(imageFile)
       })
 
-      console.log('Sending launch request...');
-
-      // Call backend API to launch token
       const res = await fetch('/api/tokens/launch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           image: imageBase64,
-          creatorWallet: wallet.publicKey.toBase58(),
-        })
-      });
-      
+          creatorWallet: walletAddress,
+        }),
+      })
+
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Launch failed');
+        const error = await res.json()
+        throw new Error(error.error || 'Launch failed')
       }
-      
-      const result = await res.json();
-      console.log('Launch result:', result);
-      
-      // Show success message with transaction signature
+
+      const result = await res.json()
+
       if (result.signature) {
-        alert(`✅ Token launched successfully!\n\n🔗 Transaction: ${result.signature}\n\n👉 View on Solscan:\nhttps://solscan.io/tx/${result.signature}`);
-      } else if (result.transaction) {
-        alert('✅ Token launch transaction created!\n\n⚠️ Please sign the transaction in your wallet to complete the launch.');
+        alert(`✅ Token launched!\n\nTransaction: ${result.signature}\n\nhttps://solscan.io/tx/${result.signature}`)
       } else {
-        alert('✅ Token launch initiated! Check your wallet for transaction confirmation.');
+        alert('✅ Token launch initiated! Check your wallet for confirmation.')
       }
-      
-      // Reset form
+
       setFormData({
-        name: '',
-        symbol: '',
-        description: '',
-        twitter: '',
-        website: '',
-        feePercentage: 1,
-        recipients: [{ wallet: '', percentage: 100 }],
-        initialBuy: 0,
-        slippage: 5,
-      });
-      removeImage();
-      setStep(1);
-      
+        name: '', symbol: '', description: '', twitter: '', website: '',
+        feePercentage: 1, recipients: [{ wallet: '', percentage: 100 }],
+        initialBuy: 0, slippage: 5,
+      })
+      removeImage()
+      setStep(1)
     } catch (e: any) {
-      console.error('Launch error:', e);
-      alert(`❌ Error launching token:\n\n${e.message}\n\nPlease check console for details.`);
+      console.error('Launch error:', e)
+      alert(`❌ Error: ${e.message}`)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
   }
 
-  // Show loading until mounted
-  if (!mounted) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <SignalLoader />
-      </div>
-    )
-  }
-
-  const isWalletConnected = wallet.connected && wallet.publicKey
-
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-8">
-      <h1 className="font-headline text-3xl font-bold tracking-tight text-white md:text-4xl">
-        Launch Your Token
-      </h1>
-      <p className="mt-2 text-on-surface-variant">
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="font-headline text-3xl font-bold tracking-tight text-white md:text-4xl">
+          Launch Your Token
+        </h1>
+        {/* Wallet status indicator */}
+        {walletAddress ? (
+          <div className="flex items-center gap-2 rounded-full bg-primary-container/20 border border-primary-container/30 px-4 py-2">
+            <span className="h-2 w-2 rounded-full bg-primary-container animate-pulse" />
+            <span className="text-xs font-mono text-primary-container">
+              {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
+            </span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={connectWallet}
+            disabled={walletBusy}
+            className="flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-bold text-on-primary-container hover:brightness-110 disabled:opacity-50"
+          >
+            {walletBusy ? <SignalLoader size="sm" /> : <Rocket className="h-4 w-4" />}
+            {walletBusy ? 'Connecting...' : 'Connect Wallet'}
+          </button>
+        )}
+      </div>
+      <p className="mt-1 text-on-surface-variant">
         Four-step wizard: metadata, fee share, launch params, then sign (Bags.fm + Solana).
       </p>
 
+      {/* Step indicator */}
       <div className="mx-auto mt-10 flex max-w-3xl items-center justify-between gap-2">
         {[1, 2, 3, 4].map((s) => (
           <div key={s} className="flex flex-1 items-center gap-2 last:flex-none">
             <div className="flex flex-col items-center gap-2">
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-full font-headline font-bold ${
-                  s < step
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full font-headline font-bold ${
+                s < step
+                  ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(0,255,163,0.3)]'
+                  : s === step
                     ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(0,255,163,0.3)]'
-                    : s === step
-                      ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(0,255,163,0.3)]'
-                      : 'border border-outline-variant/30 bg-surface-container text-white/40'
-                }`}
-              >
+                    : 'border border-outline-variant/30 bg-surface-container text-white/40'
+              }`}>
                 {s < step ? <Check className="h-5 w-5" /> : s}
               </div>
-              <span
-                className={`hidden text-center text-[10px] font-headline font-medium uppercase tracking-widest sm:block ${
-                  s === step ? 'text-primary-container' : 'text-white/40'
-                }`}
-              >
+              <span className={`hidden text-center text-[10px] font-headline font-medium uppercase tracking-widest sm:block ${
+                s === step ? 'text-primary-container' : 'text-white/40'
+              }`}>
                 {STEPS[s - 1]}
               </span>
             </div>
             {s < 4 && (
               <div className="mb-6 h-[2px] min-w-[1rem] flex-1 bg-surface-container-highest">
-                <div
-                  className="h-full bg-primary-container transition-all duration-500"
-                  style={{ width: s < step ? '100%' : '0%' }}
-                />
+                <div className="h-full bg-primary-container transition-all duration-500" style={{ width: s < step ? '100%' : '0%' }} />
               </div>
             )}
           </div>
@@ -251,282 +245,171 @@ export default function LauncherContent() {
       </div>
 
       <div className="glass-card mt-10 rounded-xl p-6 md:p-8">
+
+        {/* STEP 1 */}
         {step === 1 && (
           <div className="space-y-6">
-            <div className="mb-6 flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-6">
               <Rocket className="h-6 w-6 text-secondary-container" />
               <h2 className="font-headline text-xl font-bold text-white">Basic token information</h2>
             </div>
 
-            {/* Image Upload Section */}
-            <div className="mb-6">
+            <div>
               <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60 mb-3 block">
-                Token Image <span className="text-error-container">*</span>
+                Token Image <span className="text-red-400">*</span>
               </label>
-              
               {!imagePreview ? (
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                    id="token-image-upload"
-                  />
-                  <label
-                    htmlFor="token-image-upload"
-                    className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-outline-variant/30 rounded-lg cursor-pointer bg-surface-container hover:bg-surface-container-high transition-colors"
-                  >
-                    <Rocket className="h-12 w-12 text-primary-container mb-3" />
+                <>
+                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="token-image-upload" />
+                  <label htmlFor="token-image-upload" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-outline-variant/30 rounded-lg cursor-pointer bg-surface-container hover:bg-surface-container-high transition-colors">
+                    <Rocket className="h-10 w-10 text-primary-container mb-3 opacity-60" />
                     <p className="text-sm text-white/80 font-medium">Click to upload token image</p>
                     <p className="text-xs text-white/40 mt-1">PNG, JPG, GIF up to 5MB</p>
                   </label>
-                </div>
+                </>
               ) : (
                 <div className="relative w-full h-48 rounded-lg overflow-hidden bg-surface-container">
-                  <img
-                    src={imagePreview}
-                    alt="Token preview"
-                    className="w-full h-full object-contain"
-                  />
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute top-2 right-2 p-2 bg-error-container/90 hover:bg-error-container rounded-full transition-colors"
-                  >
-                    <X className="h-4 w-4 text-on-error-container" />
+                  <img src={imagePreview} alt="Token preview" className="w-full h-full object-contain" />
+                  <button type="button" onClick={removeImage} className="absolute top-2 right-2 p-2 bg-red-500/90 hover:bg-red-500 rounded-full transition-colors">
+                    <X className="h-4 w-4 text-white" />
                   </button>
-                  <div className="absolute bottom-2 left-2 right-2 bg-surface-container-highest/90 backdrop-blur-sm rounded px-3 py-2">
-                    <p className="text-xs text-white/80 truncate">{imageFile?.name}</p>
-                    <p className="text-xs text-white/40">{(imageFile!.size / 1024).toFixed(1)} KB</p>
+                  <div className="absolute bottom-2 left-2 right-2 bg-black/70 backdrop-blur-sm rounded px-3 py-1">
+                    <p className="text-xs text-white/80 truncate">{imageFile?.name} · {(imageFile!.size / 1024).toFixed(1)} KB</p>
                   </div>
                 </div>
               )}
-
-              {uploadError && (
-                <div className="mt-2 flex items-center gap-2 text-error-container text-sm">
-                  <X className="h-4 w-4" />
-                  <span>{uploadError}</span>
-                </div>
-              )}
+              {uploadError && <p className="mt-2 text-sm text-red-400">{uploadError}</p>}
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
               <div>
-                <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60">
-                  Token name <span className="text-error-container">*</span>
-                </label>
-                <input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60">Token name <span className="text-red-400">*</span></label>
+                <input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="mt-2 w-full rounded-lg border-none bg-surface-container py-3.5 px-4 text-white placeholder:text-white/20 focus:ring-2 focus:ring-primary-container"
-                  placeholder="e.g. Bags Artificial Intelligence"
-                  required
-                />
+                  placeholder="e.g. Bags Artificial Intelligence" />
               </div>
               <div>
-                <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60">
-                  Symbol <span className="text-error-container">*</span>
-                </label>
-                <input
-                  value={formData.symbol}
-                  onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
+                <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60">Symbol <span className="text-red-400">*</span></label>
+                <input value={formData.symbol} onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
                   className="mt-2 w-full rounded-lg border-none bg-surface-container py-3.5 px-4 text-white placeholder:text-white/20 focus:ring-2 focus:ring-primary-container uppercase"
-                  placeholder="e.g. BAGS"
-                  maxLength={10}
-                  required
-                />
+                  placeholder="e.g. BAGS" maxLength={10} />
               </div>
               <div className="md:col-span-2">
-                <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60">
-                  Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={4}
+                <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60">Description</label>
+                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3} maxLength={500}
                   className="mt-2 w-full rounded-lg border-none bg-surface-container py-3.5 px-4 text-white placeholder:text-white/20 focus:ring-2 focus:ring-primary-container resize-none"
-                  placeholder="Tell the community what this token is for..."
-                  maxLength={500}
-                />
+                  placeholder="Tell the community what this token is for..." />
                 <p className="text-xs text-white/40 mt-1 text-right">{formData.description.length}/500</p>
               </div>
               <div>
-                <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60">
-                  Twitter / X
-                </label>
-                <input
-                  value={formData.twitter}
-                  onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
+                <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60">Twitter / X</label>
+                <input value={formData.twitter} onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
                   className="mt-2 w-full rounded-lg border-none bg-surface-container py-3.5 px-4 text-white placeholder:text-white/20 focus:ring-2 focus:ring-primary-container"
-                  placeholder="@handle or https://x.com/handle"
-                />
+                  placeholder="@handle" />
               </div>
               <div>
-                <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60">
-                  Website
-                </label>
-                <input
-                  value={formData.website}
-                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60">Website</label>
+                <input value={formData.website} onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                   className="mt-2 w-full rounded-lg border-none bg-surface-container py-3.5 px-4 text-white placeholder:text-white/20 focus:ring-2 focus:ring-primary-container"
-                  placeholder="https://yourwebsite.com"
-                />
+                  placeholder="https://yourwebsite.com" />
               </div>
             </div>
           </div>
         )}
 
+        {/* STEP 2 */}
         {step === 2 && (
           <div className="space-y-6">
-            <div className="mb-6 flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-6">
               <Rocket className="h-6 w-6 text-secondary-container" />
               <h2 className="font-headline text-xl font-bold text-white">Fee configuration</h2>
             </div>
-            
-            <div className="rounded-lg border border-tertiary-fixed-dim/25 bg-tertiary-fixed-dim/10 p-4 mb-6">
-              <p className="text-sm text-tertiary-fixed-dim">
-                Configure how trading fees are distributed. You can set a fee percentage and specify recipient wallets.
-              </p>
+            <div className="rounded-lg border border-tertiary-fixed-dim/25 bg-tertiary-fixed-dim/10 p-4">
+              <p className="text-sm text-tertiary-fixed-dim">Configure how trading fees are distributed to recipient wallets.</p>
             </div>
-
             <div>
-              <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60 mb-2 block">
-                Fee percentage (0.5% - 5%)
-              </label>
+              <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60 mb-2 block">Fee percentage (0.5% - 5%)</label>
               <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min={0.5}
-                  max={5}
-                  step={0.5}
-                  value={formData.feePercentage}
-                  onChange={(e) =>
-                    setFormData({ ...formData, feePercentage: Number(e.target.value) })
-                  }
-                  className="flex-1 h-2 bg-surface-container rounded-lg appearance-none cursor-pointer accent-primary-container"
-                />
-                <div className="w-20 text-center">
-                  <span className="text-2xl font-bold text-primary-container">{formData.feePercentage}%</span>
-                </div>
+                <input type="range" min={0.5} max={5} step={0.5} value={formData.feePercentage}
+                  onChange={(e) => setFormData({ ...formData, feePercentage: Number(e.target.value) })}
+                  className="flex-1 h-2 bg-surface-container rounded-lg appearance-none cursor-pointer accent-primary-container" />
+                <span className="text-2xl font-bold text-primary-container w-16 text-center">{formData.feePercentage}%</span>
               </div>
             </div>
-
             <div>
-              <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60 mb-3 block">
-                Fee Recipients
-              </label>
+              <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60 mb-3 block">Fee Recipients</label>
               {formData.recipients.map((recipient, index) => (
                 <div key={index} className="mt-3 flex gap-3">
-                  <input
-                    value={recipient.wallet}
+                  <input value={recipient.wallet}
                     onChange={(e) => {
                       const next = [...formData.recipients]
                       next[index] = { ...next[index], wallet: e.target.value }
                       setFormData({ ...formData, recipients: next })
                     }}
                     className="flex-1 rounded-lg border-none bg-surface-container py-3.5 px-4 text-white placeholder:text-white/20 focus:ring-2 focus:ring-primary-container"
-                    placeholder="Solana wallet address"
-                  />
-                  <div className="flex items-center gap-2 bg-surface-container rounded-lg px-4">
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={recipient.percentage}
+                    placeholder="Solana wallet address" />
+                  <div className="flex items-center gap-1 bg-surface-container rounded-lg px-3">
+                    <input type="number" min={0} max={100} value={recipient.percentage}
                       onChange={(e) => {
                         const next = [...formData.recipients]
-                        next[index] = {
-                          ...next[index],
-                          percentage: Number(e.target.value),
-                        }
+                        next[index] = { ...next[index], percentage: Number(e.target.value) }
                         setFormData({ ...formData, recipients: next })
                       }}
-                      className="w-16 bg-transparent text-white text-center focus:outline-none"
-                    />
+                      className="w-14 bg-transparent text-white text-center focus:outline-none" />
                     <span className="text-white/60">%</span>
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => {
-                  setFormData({
-                    ...formData,
-                    recipients: [...formData.recipients, { wallet: '', percentage: 0 }]
-                  })
-                }}
-                className="mt-3 text-sm text-primary-container hover:text-primary-container/80 transition-colors"
-              >
+              <button type="button"
+                onClick={() => setFormData({ ...formData, recipients: [...formData.recipients, { wallet: '', percentage: 0 }] })}
+                className="mt-3 text-sm text-primary-container hover:opacity-80 transition-opacity">
                 + Add recipient
               </button>
             </div>
           </div>
         )}
 
+        {/* STEP 3 */}
         {step === 3 && (
           <div className="space-y-6">
-            <div className="mb-6 flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-6">
               <Rocket className="h-6 w-6 text-secondary-container" />
               <h2 className="font-headline text-xl font-bold text-white">Launch settings</h2>
             </div>
-
-            <div className="rounded-lg border border-tertiary-fixed-dim/25 bg-tertiary-fixed-dim/10 p-4 mb-6">
-              <p className="text-sm text-tertiary-fixed-dim">
-                Optional: Configure initial buy amount and slippage tolerance for your token launch.
-              </p>
+            <div className="rounded-lg border border-tertiary-fixed-dim/25 bg-tertiary-fixed-dim/10 p-4">
+              <p className="text-sm text-tertiary-fixed-dim">Optional: Configure initial buy and slippage tolerance.</p>
             </div>
-
             <div>
-              <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60 mb-2 block">
-                Initial buy amount (SOL)
-              </label>
+              <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60 mb-2 block">Initial buy amount (SOL)</label>
               <div className="relative">
-                <input
-                  type="number"
-                  min={0}
-                  step={0.1}
-                  value={formData.initialBuy}
+                <input type="number" min={0} step={0.1} value={formData.initialBuy}
                   onChange={(e) => setFormData({ ...formData, initialBuy: Number(e.target.value) })}
                   className="w-full rounded-lg border-none bg-surface-container py-3.5 px-4 pr-16 text-white placeholder:text-white/20 focus:ring-2 focus:ring-primary-container"
-                  placeholder="0.0"
-                />
+                  placeholder="0.0" />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 font-medium">SOL</span>
               </div>
               <p className="text-xs text-white/40 mt-2">Amount of SOL to buy immediately after launch (optional)</p>
             </div>
-
             <div>
-              <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60 mb-2 block">
-                Slippage tolerance
-              </label>
+              <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60 mb-2 block">Slippage tolerance</label>
               <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min={1}
-                  max={20}
-                  step={1}
-                  value={formData.slippage}
+                <input type="range" min={1} max={20} step={1} value={formData.slippage}
                   onChange={(e) => setFormData({ ...formData, slippage: Number(e.target.value) })}
-                  className="flex-1 h-2 bg-surface-container rounded-lg appearance-none cursor-pointer accent-primary-container"
-                />
-                <div className="w-20 text-center">
-                  <span className="text-2xl font-bold text-primary-container">{formData.slippage}%</span>
-                </div>
+                  className="flex-1 h-2 bg-surface-container rounded-lg appearance-none cursor-pointer accent-primary-container" />
+                <span className="text-2xl font-bold text-primary-container w-16 text-center">{formData.slippage}%</span>
               </div>
-              <p className="text-xs text-white/40 mt-2">Maximum price movement tolerance for transactions</p>
             </div>
           </div>
         )}
 
+        {/* STEP 4 */}
         {step === 4 && (
           <div className="space-y-6">
-            <div className="mb-6 flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-6">
               <Check className="h-6 w-6 text-secondary-container" />
               <h2 className="font-headline text-xl font-bold text-white">Review & Launch</h2>
             </div>
-
-            {/* Token Preview Card */}
             <div className="rounded-lg bg-surface-container-high/50 p-6 space-y-4">
               <div className="flex items-start gap-4">
                 {imagePreview && (
@@ -535,108 +418,65 @@ export default function LauncherContent() {
                   </div>
                 )}
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-white">{formData.name || 'Token Name'}</h3>
-                  <p className="text-primary-container font-bold">${formData.symbol || 'SYMBOL'}</p>
-                  {formData.description && (
-                    <p className="text-sm text-white/60 mt-2 line-clamp-2">{formData.description}</p>
-                  )}
+                  <h3 className="text-xl font-bold text-white">{formData.name}</h3>
+                  <p className="text-primary-container font-bold">${formData.symbol}</p>
+                  {formData.description && <p className="text-sm text-white/60 mt-1 line-clamp-2">{formData.description}</p>}
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-                <div>
-                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Fee Percentage</p>
-                  <p className="text-white font-bold">{formData.feePercentage}%</p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Recipients</p>
-                  <p className="text-white font-bold">{formData.recipients.length}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Initial Buy</p>
-                  <p className="text-white font-bold">{formData.initialBuy} SOL</p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Slippage</p>
-                  <p className="text-white font-bold">{formData.slippage}%</p>
-                </div>
-              </div>
-
-              {(formData.twitter || formData.website) && (
-                <div className="pt-4 border-t border-white/10">
-                  <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Social Links</p>
-                  <div className="flex gap-3">
-                    {formData.twitter && (
-                      <span className="text-sm text-primary-container">🐦 Twitter</span>
-                    )}
-                    {formData.website && (
-                      <span className="text-sm text-primary-container">🌐 Website</span>
-                    )}
+                {[
+                  ['Fee', `${formData.feePercentage}%`],
+                  ['Recipients', String(formData.recipients.length)],
+                  ['Initial Buy', `${formData.initialBuy} SOL`],
+                  ['Slippage', `${formData.slippage}%`],
+                ].map(([k, v]) => (
+                  <div key={k}>
+                    <p className="text-xs text-white/40 uppercase tracking-wider mb-1">{k}</p>
+                    <p className="text-white font-bold">{v}</p>
                   </div>
+                ))}
+              </div>
+              {(formData.twitter || formData.website) && (
+                <div className="pt-4 border-t border-white/10 flex gap-4">
+                  {formData.twitter && <span className="text-sm text-primary-container">🐦 {formData.twitter}</span>}
+                  {formData.website && <span className="text-sm text-primary-container">🌐 {formData.website}</span>}
                 </div>
               )}
             </div>
-
-            <div className="rounded-lg border border-tertiary-fixed-dim/25 bg-tertiary-fixed-dim/10 p-4">
-              <div className="flex items-start gap-3">
-                <Rocket className="h-5 w-5 text-tertiary-fixed-dim flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-tertiary-fixed-dim space-y-2">
-                  <p className="font-bold">Important Information:</p>
-                  <ul className="list-disc list-inside space-y-1 text-xs">
-                    <li>Estimated network fee: ~0.02-0.05 SOL</li>
-                    <li>Transaction will be sent to Bags.fm API</li>
-                    <li>You will need to sign the transaction in your wallet</li>
-                    <li>Token will be created on Solana blockchain</li>
-                  </ul>
-                </div>
-              </div>
+            <div className="rounded-lg border border-yellow-500/25 bg-yellow-500/10 p-4">
+              <p className="text-sm text-yellow-400 font-bold mb-2">⚠️ Important:</p>
+              <ul className="text-xs text-yellow-400/80 space-y-1 list-disc list-inside">
+                <li>Estimated network fee: ~0.02-0.05 SOL</li>
+                <li>Transaction will be sent to Bags.fm API</li>
+                <li>Token will be created on Solana blockchain</li>
+              </ul>
             </div>
           </div>
         )}
 
+        {/* Navigation buttons */}
         <div className="mt-8 flex justify-between gap-4">
           {step > 1 ? (
-            <button
-              type="button"
-              onClick={handleBack}
-              className="rounded-lg border border-white/15 bg-surface-container-high px-6 py-3 text-white transition-colors hover:bg-white/10"
-            >
+            <button type="button" onClick={handleBack}
+              className="rounded-lg border border-white/15 bg-surface-container-high px-6 py-3 text-white transition-colors hover:bg-white/10">
               Back
             </button>
-          ) : (
-            <span />
-          )}
+          ) : <span />}
+
           {step < 4 ? (
-            <button
-              type="button"
-              onClick={handleNext}
-              className="flex items-center gap-2 rounded-lg bg-primary-container px-6 py-3 font-bold text-on-primary-container hover:brightness-110"
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
+            <button type="button" onClick={handleNext}
+              className="flex items-center gap-2 rounded-lg bg-primary-container px-6 py-3 font-bold text-on-primary-container hover:brightness-110">
+              Next <ChevronRight className="h-4 w-4" />
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={handleLaunch}
-              disabled={isLoading || !isWalletConnected}
-              className="flex items-center justify-center gap-2 rounded-lg bg-primary-container px-6 py-3 font-bold text-on-primary-container disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 transition-all min-w-[200px]"
-            >
+            <button type="button" onClick={handleLaunch} disabled={isLoading}
+              className="flex items-center justify-center gap-2 rounded-lg bg-primary-container px-8 py-3 font-bold text-on-primary-container disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 transition-all min-w-[180px]">
               {isLoading ? (
-                <>
-                  <SignalLoader size="sm" />
-                  <span>Launching...</span>
-                </>
-              ) : !isWalletConnected ? (
-                <>
-                  <X className="h-4 w-4" />
-                  <span>Connect Wallet First</span>
-                </>
+                <><SignalLoader size="sm" /><span>Launching...</span></>
+              ) : !walletAddress ? (
+                <><Rocket className="h-4 w-4" /><span>Connect & Launch</span></>
               ) : (
-                <>
-                  <Rocket className="h-4 w-4" />
-                  <span>Launch Token</span>
-                </>
+                <><Rocket className="h-4 w-4" /><span>Launch Token</span></>
               )}
             </button>
           )}
