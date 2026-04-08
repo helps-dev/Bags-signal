@@ -103,23 +103,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <a
-            href="https://x.com/Bags_signals"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg p-2 text-white/60 transition-colors hover:bg-white/5 hover:text-primary-container"
-            aria-label="Follow us on Twitter"
-            title="Follow @Bags_signals on X"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
-          </a>
           <button
             type="button"
             className="relative rounded-lg p-2 text-white/60 transition-colors hover:bg-white/5 hover:text-primary-container"
@@ -204,6 +187,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )
           })}
         </nav>
+        
+        {/* Social Media Links */}
+        <div className="mt-auto border-t border-white/5 px-6 py-4">
+          <a
+            href="https://x.com/Bags_signals"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-white/60 transition-colors hover:bg-white/5 hover:text-primary-container"
+            onClick={() => setMobileOpen(false)}
+          >
+            <svg
+              className="h-5 w-5 shrink-0"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+            <span className="text-sm font-medium">Follow @Bags_signals</span>
+          </a>
+        </div>
+        
         {/* Pro Plan section hidden for now */}
         {false && (
           <div className="mt-auto px-6">
