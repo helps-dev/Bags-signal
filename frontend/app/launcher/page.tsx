@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AppShell from '../components/AppShell'
 import { Check, ChevronRight, Rocket, X } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -29,6 +29,15 @@ export default function TokenLauncherPage() {
     initialBuy: 0,
     slippage: 5,
   })
+
+  // Debug wallet connection
+  useEffect(() => {
+    console.log('Wallet status:', {
+      connected: wallet.connected,
+      connecting: wallet.connecting,
+      publicKey: wallet.publicKey?.toBase58(),
+    })
+  }, [wallet.connected, wallet.connecting, wallet.publicKey])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -84,19 +93,31 @@ export default function TokenLauncherPage() {
   }
 
   const handleLaunch = async () => {
-    if (!wallet.connected || !wallet.publicKey) {
-      alert('Please connect your wallet first');
+    // Better wallet detection
+    console.log('Launch attempt - Wallet state:', {
+      connected: wallet.connected,
+      publicKey: wallet.publicKey?.toBase58(),
+      wallet: wallet.wallet?.adapter?.name
+    });
+
+    if (!wallet.publicKey) {
+      alert('⚠️ Please connect your wallet first!\n\nClick the "Connect Wallet" button in the top right corner.');
+      return;
+    }
+
+    if (!wallet.connected) {
+      alert('⚠️ Wallet is not fully connected. Please try reconnecting your wallet.');
       return;
     }
 
     // Validate form data
     if (!formData.name || !formData.symbol) {
-      alert('Please fill in token name and symbol');
+      alert('⚠️ Please fill in token name and symbol');
       return;
     }
 
     if (!imageFile) {
-      alert('Please upload a token image');
+      alert('⚠️ Please upload a token image');
       return;
     }
 
@@ -109,6 +130,8 @@ export default function TokenLauncherPage() {
         reader.onerror = reject
         reader.readAsDataURL(imageFile)
       })
+
+      console.log('Sending launch request...');
 
       // Call backend API to launch token
       const res = await fetch('/api/tokens/launch', {
@@ -127,6 +150,7 @@ export default function TokenLauncherPage() {
       }
       
       const result = await res.json();
+      console.log('Launch result:', result);
       
       // Show success message with transaction signature
       if (result.signature) {
@@ -574,7 +598,7 @@ export default function TokenLauncherPage() {
               <button
                 type="button"
                 onClick={handleLaunch}
-                disabled={isLoading || !wallet.connected}
+                disabled={isLoading || (!wallet.connected && !wallet.publicKey)}
                 className="flex items-center justify-center gap-2 rounded-lg bg-primary-container px-6 py-3 font-bold text-on-primary-container disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 transition-all"
               >
                 {isLoading ? (
@@ -582,10 +606,10 @@ export default function TokenLauncherPage() {
                     <SignalLoader size="sm" />
                     <span>Launching...</span>
                   </>
-                ) : !wallet.connected ? (
+                ) : (!wallet.connected && !wallet.publicKey) ? (
                   <>
                     <X className="h-4 w-4" />
-                    <span>Connect Wallet to Launch</span>
+                    <span>Connect Wallet First</span>
                   </>
                 ) : (
                   <>
