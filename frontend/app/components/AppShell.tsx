@@ -194,18 +194,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             href="https://x.com/Bags_signals"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-white/60 transition-colors hover:bg-white/5 hover:text-primary-container"
+            className="flex items-center justify-center rounded-lg p-3 text-white/60 transition-colors hover:bg-white/5 hover:text-primary-container"
             onClick={() => setMobileOpen(false)}
+            aria-label="Follow @Bags_signals on X"
+            title="Follow @Bags_signals on X"
           >
             <svg
-              className="h-5 w-5 shrink-0"
+              className="h-5 w-5"
               fill="currentColor"
               viewBox="0 0 24 24"
               aria-hidden="true"
             >
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
             </svg>
-            <span className="text-sm font-medium">Follow @Bags_signals</span>
           </a>
         </div>
         
