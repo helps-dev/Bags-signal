@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import AppShell from '../components/AppShell'
 import { Coins, Download, RefreshCw } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { InlineLoader } from '../components/SignalLoader'
 
 const SOL_USD = 141
 
@@ -194,7 +195,10 @@ export default function PortfolioPage() {
         </section>
 
         <div className="relative overflow-hidden rounded-xl border border-white/5 bg-surface-container-low">
-          <table className="w-full text-left text-sm">
+          {isLoading ? (
+            <InlineLoader message="Loading portfolio data..." />
+          ) : (
+            <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-white/10 text-on-surface-variant">
                 <th className="p-4 font-medium">Token</th>
@@ -238,6 +242,7 @@ export default function PortfolioPage() {
               ))}
             </tbody>
           </table>
+          )}
         </div>
         <p className="mt-6 flex items-center gap-2 text-xs text-on-surface-variant">
           <Coins className="h-4 w-4" />

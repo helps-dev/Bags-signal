@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import AppShell from '../components/AppShell'
 import { Check, ChevronRight, Rocket } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
+import { SignalLoader } from '../components/SignalLoader'
 
 const STEPS = ['Token Info', 'Fee Config', 'Launch Settings', 'Review'] as const
 
@@ -333,7 +334,7 @@ export default function TokenLauncherPage() {
                 className="flex items-center gap-2 rounded-lg bg-primary-container px-6 py-3 font-bold text-on-primary-container disabled:opacity-50"
               >
                 {isLoading ? (
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-on-primary-container border-t-transparent" />
+                  <SignalLoader size="sm" />
                 ) : (
                   <Rocket className="h-4 w-4" />
                 )}

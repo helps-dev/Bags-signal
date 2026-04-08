@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import TokenCard from './TokenCard'
 import FilterBar, { type FilterState } from './FilterBar'
 import { useWebSocket } from '../../lib/hooks/useWebSocket'
+import { InlineLoader } from './SignalLoader'
 
 export interface FeedToken {
   tokenMint: string
@@ -274,9 +275,7 @@ export default function SignalFeed() {
       <FilterBar filters={filters} onFilterChange={setFilters} totalTokens={tokens.length} filteredTokens={filtered.length} />
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-24">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary-container border-t-transparent" />
-        </div>
+        <InlineLoader message="Fetching signals from Bags.fm..." />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((token) => (
