@@ -3,19 +3,20 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Activity,
   Bell,
   Menu,
   Rocket,
-  Search,
   Settings,
   SlidersHorizontal,
   Wallet,
   X,
 } from 'lucide-react'
 import { clsx } from 'clsx'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 
 const nav = [
   { href: '/', label: 'Signals', icon: Activity },
@@ -25,61 +26,23 @@ const nav = [
   { href: '/settings', label: 'Settings', icon: Settings },
 ] as const
 
-type PhantomProvider = {
-  isPhantom?: boolean
-  publicKey?: { toString: () => string }
-  connect: () => Promise<void>
-  disconnect: () => Promise<void>
-  on?: (event: 'connect' | 'disconnect', handler: () => void) => void
-  off?: (event: 'connect' | 'disconnect', handler: () => void) => void
-}
-
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [wallet, setWallet] = useState<PhantomProvider | null>(null)
-  const [walletAddress, setWalletAddress] = useState<string | null>(null)
-  const [walletBusy, setWalletBusy] = useState(false)
+  const { connected, publicKey, disconnect, connecting } = useWallet()
+  const { setVisible } = useWalletModal()
 
-  useEffect(() => {
-    const provider = (window as Window & { solana?: PhantomProvider }).solana
-    if (!provider?.isPhantom) return
-
-    const handleConnect = () => {
-      setWalletAddress(provider.publicKey?.toString() ?? null)
-    }
-    const handleDisconnect = () => setWalletAddress(null)
-
-    setWallet(provider)
-    handleConnect()
-    provider.on?.('connect', handleConnect)
-    provider.on?.('disconnect', handleDisconnect)
-
-    return () => {
-      provider.off?.('connect', handleConnect)
-      provider.off?.('disconnect', handleDisconnect)
-    }
-  }, [])
-
-  async function handleWalletButton() {
-    if (!wallet) {
-      window.open('https://phantom.app/', '_blank', 'noopener,noreferrer')
-      return
-    }
-
-    setWalletBusy(true)
-    try {
-      if (walletAddress) {
-        await wallet.disconnect()
-        setWalletAddress(null)
-      } else {
-        await wallet.connect()
-        setWalletAddress(wallet.publicKey?.toString() ?? null)
-      }
-    } finally {
-      setWalletBusy(false)
+  function handleWalletButton() {
+    if (connected) {
+      disconnect()
+    } else {
+      setVisible(true)
     }
   }
+
+  const shortAddress = publicKey
+    ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}`
+    : null
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,7 +62,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               placeholder="Search tokens or pairs..."
               className="focus:ring-primary-container/50 w-64 rounded-lg border-none bg-surface-container-highest py-2 pl-10 pr-4 text-sm text-on-surface placeholder:text-white/30 focus:ring-1"
             />
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <Bell className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -113,18 +76,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           <button
             type="button"
-            className="rounded-full bg-primary-container px-5 py-2 text-sm font-bold text-on-primary-container transition-all hover:brightness-110"
+            className={clsx(
+              'rounded-full px-5 py-2 text-sm font-bold transition-all hover:brightness-110',
+              connected
+                ? 'bg-primary-container/20 border border-primary-container/40 text-primary-container'
+                : 'bg-primary-container text-on-primary-container'
+            )}
             onClick={handleWalletButton}
-            disabled={walletBusy}
-            title={wallet ? 'Connect your Phantom wallet' : 'Phantom not found. Click to install.'}
+            disabled={connecting}
           >
-            {walletBusy
+            {connecting
               ? 'Connecting...'
-              : walletAddress
-                ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
-                : wallet
-                  ? 'Connect Wallet'
-                  : 'Install Phantom'}
+              : connected && shortAddress
+                ? shortAddress
+                : 'Connect Wallet'}
           </button>
         </div>
       </nav>
@@ -147,10 +112,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mb-10 mt-14 px-6">
           <Link href="/" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden">
-              <Image 
-                src="/logo-transparant.png" 
-                alt="Bags Signal Logo" 
-                width={40} 
+              <Image
+                src="/logo-transparant.png"
+                alt="Bags Signal Logo"
+                width={40}
                 height={40}
                 className="object-contain"
               />
@@ -163,6 +128,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
         </div>
+
         <nav className="font-headline flex-1 space-y-1 text-sm font-medium">
           {nav.map(({ href, label, icon: Icon }) => {
             const active =
@@ -187,8 +153,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )
           })}
         </nav>
-        
-        {/* Social Media Links */}
+
+        {/* Social Media */}
         <div className="mt-auto border-t border-white/5 px-6 py-4">
           <a
             href="https://x.com/Bags_signals"
@@ -197,36 +163,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             className="flex items-center justify-center rounded-lg p-3 text-white/60 transition-colors hover:bg-white/5 hover:text-primary-container"
             onClick={() => setMobileOpen(false)}
             aria-label="Follow @Bags_signals on X"
-            title="Follow @Bags_signals on X"
           >
-            <svg
-              className="h-5 w-5"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
+            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
             </svg>
           </a>
         </div>
-        
-        {/* Pro Plan section hidden for now */}
-        {false && (
-          <div className="mt-auto px-6">
-            <div className="relative overflow-hidden rounded-xl border border-white/5 bg-surface-container p-4">
-              <div className="relative z-10">
-                <div className="mb-2 text-xs text-white/60">PRO PLAN</div>
-                <div className="mb-4 text-sm font-bold text-white">Unlimited Alpha Access</div>
-                <button
-                  type="button"
-                  className="w-full rounded-lg border border-white/10 bg-white/5 py-2 text-xs text-white transition-colors hover:bg-white/10"
-                >
-                  Upgrade to Pro
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </aside>
 
       <main className="min-h-screen pt-16 md:ml-64">{children}</main>

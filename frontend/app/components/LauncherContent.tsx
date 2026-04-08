@@ -1,23 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Check, ChevronRight, Rocket, X } from 'lucide-react'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import { SignalLoader } from './SignalLoader'
 
 const STEPS = ['Token Info', 'Fee Config', 'Launch Settings', 'Review'] as const
-
-type PhantomProvider = {
-  isPhantom?: boolean
-  publicKey?: { toString: () => string }
-  connect: () => Promise<{ publicKey: { toString: () => string } }>
-  disconnect: () => Promise<void>
-  signTransaction?: (tx: unknown) => Promise<unknown>
-}
-
-function getPhantom(): PhantomProvider | null {
-  if (typeof window === 'undefined') return null
-  return (window as any).solana?.isPhantom ? (window as any).solana : null
-}
 
 export default function LauncherContent() {
   const [step, setStep] = useState(1)
@@ -25,9 +14,10 @@ export default function LauncherContent() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
   const [uploadError, setUploadError] = useState<string>('')
-  const [walletAddress, setWalletAddress] = useState<string | null>(null)
-  const [walletBusy, setWalletBusy] = useState(false)
   const [backendStatus, setBackendStatus] = useState<'unknown' | 'online' | 'offline'>('unknown')
+
+  const { connected, publicKey, connecting } = useWallet()
+  const { setVisible } = useWalletModal()
 
   const [formData, setFormData] = useState({
     name: '',
@@ -41,31 +31,6 @@ export default function LauncherContent() {
     slippage: 5,
   })
 
-  // Detect wallet on mount
-  useEffect(() => {
-    const phantom = getPhantom()
-    if (!phantom) return
-
-    // Check if already connected
-    if (phantom.publicKey) {
-      setWalletAddress(phantom.publicKey.toString())
-    }
-
-    const handleConnect = () => {
-      if (phantom.publicKey) setWalletAddress(phantom.publicKey.toString())
-    }
-    const handleDisconnect = () => setWalletAddress(null)
-
-    const p = phantom as any
-    p.on?.('connect', handleConnect)
-    p.on?.('disconnect', handleDisconnect)
-
-    return () => {
-      p.off?.('connect', handleConnect)
-      p.off?.('disconnect', handleDisconnect)
-    }
-  }, [])
-
   // Check backend health when reaching step 4
   useEffect(() => {
     if (step !== 4) return
@@ -73,28 +38,11 @@ export default function LauncherContent() {
     fetch('/api/tokens/launch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ _healthCheck: true, name: '_', symbol: '_', creatorWallet: '_' })
+      body: JSON.stringify({ name: '_', symbol: '_', creatorWallet: '_' }),
     })
       .then(r => setBackendStatus(r.status < 500 || r.status === 400 ? 'online' : 'offline'))
       .catch(() => setBackendStatus('offline'))
   }, [step])
-
-  const connectWallet = useCallback(async () => {
-    const phantom = getPhantom()
-    if (!phantom) {
-      window.open('https://phantom.app/', '_blank', 'noopener,noreferrer')
-      return
-    }
-    setWalletBusy(true)
-    try {
-      const resp = await phantom.connect()
-      setWalletAddress(resp.publicKey.toString())
-    } catch (e) {
-      console.error('Wallet connect error:', e)
-    } finally {
-      setWalletBusy(false)
-    }
-  }, [])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -139,16 +87,8 @@ export default function LauncherContent() {
   }
 
   const handleLaunch = async () => {
-    if (!walletAddress) {
-      await connectWallet()
-      return
-    }
-    if (!formData.name || !formData.symbol) {
-      alert('Please fill in token name and symbol')
-      return
-    }
-    if (!imageFile) {
-      alert('Please upload a token image')
+    if (!connected || !publicKey) {
+      setVisible(true)
       return
     }
 
@@ -158,7 +98,7 @@ export default function LauncherContent() {
         const reader = new FileReader()
         reader.onloadend = () => resolve(reader.result as string)
         reader.onerror = reject
-        reader.readAsDataURL(imageFile)
+        reader.readAsDataURL(imageFile!)
       })
 
       const res = await fetch('/api/tokens/launch', {
@@ -167,73 +107,65 @@ export default function LauncherContent() {
         body: JSON.stringify({
           ...formData,
           image: imageBase64,
-          creatorWallet: walletAddress,
+          creatorWallet: publicKey.toBase58(),
         }),
       })
 
       let result: any = {}
-      try {
-        result = await res.json()
-      } catch {
-        result = {}
-      }
+      try { result = await res.json() } catch { result = {} }
 
-      if (!res.ok) {
-        throw new Error(result.error || `Server error: ${res.status}`)
-      }
+      if (!res.ok) throw new Error(result.error || `Error ${res.status}`)
 
       if (result.signature) {
-        alert(`✅ Token launched!\n\nTransaction: ${result.signature}\n\nhttps://solscan.io/tx/${result.signature}`)
-      } else if (result.transaction || result.txBase64) {
-        alert('✅ Transaction created! Please sign in your wallet.')
+        alert(`✅ Token launched!\n\nTx: ${result.signature}\nhttps://solscan.io/tx/${result.signature}`)
       } else {
-        alert('✅ Token launch initiated! Check your wallet for confirmation.')
+        alert('✅ Token launch initiated!')
       }
 
-      setFormData({
-        name: '', symbol: '', description: '', twitter: '', website: '',
-        feePercentage: 1, recipients: [{ wallet: '', percentage: 100 }],
-        initialBuy: 0, slippage: 5,
-      })
+      setFormData({ name: '', symbol: '', description: '', twitter: '', website: '', feePercentage: 1, recipients: [{ wallet: '', percentage: 100 }], initialBuy: 0, slippage: 5 })
       removeImage()
       setStep(1)
     } catch (e: any) {
-      console.error('Launch error:', e)
-      alert(`❌ Error: ${e.message}`)
+      alert(`❌ ${e.message}`)
     } finally {
       setIsLoading(false)
     }
   }
 
+  const walletLabel = connecting
+    ? 'Connecting...'
+    : connected && publicKey
+      ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}`
+      : null
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-8">
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="font-headline text-3xl font-bold tracking-tight text-white md:text-4xl">
-          Launch Your Token
-        </h1>
-        {/* Wallet status indicator */}
-        {walletAddress ? (
+      <div className="flex items-center justify-between mb-2 flex-wrap gap-3">
+        <div>
+          <h1 className="font-headline text-3xl font-bold tracking-tight text-white md:text-4xl">
+            Launch Your Token
+          </h1>
+          <p className="mt-1 text-on-surface-variant text-sm">
+            Four-step wizard: metadata → fee share → launch params → sign
+          </p>
+        </div>
+        {/* Wallet status */}
+        {walletLabel ? (
           <div className="flex items-center gap-2 rounded-full bg-primary-container/20 border border-primary-container/30 px-4 py-2">
             <span className="h-2 w-2 rounded-full bg-primary-container animate-pulse" />
-            <span className="text-xs font-mono text-primary-container">
-              {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
-            </span>
+            <span className="text-xs font-mono text-primary-container">{walletLabel}</span>
           </div>
         ) : (
           <button
             type="button"
-            onClick={connectWallet}
-            disabled={walletBusy}
-            className="flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-bold text-on-primary-container hover:brightness-110 disabled:opacity-50"
+            onClick={() => setVisible(true)}
+            className="flex items-center gap-2 rounded-full bg-primary-container px-4 py-2 text-sm font-bold text-on-primary-container hover:brightness-110"
           >
-            {walletBusy ? <SignalLoader size="sm" /> : <Rocket className="h-4 w-4" />}
-            {walletBusy ? 'Connecting...' : 'Connect Wallet'}
+            <Rocket className="h-4 w-4" />
+            Connect Wallet
           </button>
         )}
       </div>
-      <p className="mt-1 text-on-surface-variant">
-        Four-step wizard: metadata, fee share, launch params, then sign (Bags.fm + Solana).
-      </p>
 
       {/* Step indicator */}
       <div className="mx-auto mt-10 flex max-w-3xl items-center justify-between gap-2">
@@ -241,11 +173,9 @@ export default function LauncherContent() {
           <div key={s} className="flex flex-1 items-center gap-2 last:flex-none">
             <div className="flex flex-col items-center gap-2">
               <div className={`flex h-10 w-10 items-center justify-center rounded-full font-headline font-bold ${
-                s < step
-                  ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(0,255,163,0.3)]'
-                  : s === step
-                    ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(0,255,163,0.3)]'
-                    : 'border border-outline-variant/30 bg-surface-container text-white/40'
+                s < step ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(0,255,163,0.3)]'
+                : s === step ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(0,255,163,0.3)]'
+                : 'border border-outline-variant/30 bg-surface-container text-white/40'
               }`}>
                 {s < step ? <Check className="h-5 w-5" /> : s}
               </div>
@@ -266,7 +196,7 @@ export default function LauncherContent() {
 
       <div className="glass-card mt-10 rounded-xl p-6 md:p-8">
 
-        {/* STEP 1 */}
+        {/* STEP 1 - Token Info */}
         {step === 1 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-6">
@@ -274,6 +204,7 @@ export default function LauncherContent() {
               <h2 className="font-headline text-xl font-bold text-white">Basic token information</h2>
             </div>
 
+            {/* Image Upload */}
             <div>
               <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60 mb-3 block">
                 Token Image <span className="text-red-400">*</span>
@@ -338,7 +269,7 @@ export default function LauncherContent() {
           </div>
         )}
 
-        {/* STEP 2 */}
+        {/* STEP 2 - Fee Config */}
         {step === 2 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-6">
@@ -390,7 +321,7 @@ export default function LauncherContent() {
           </div>
         )}
 
-        {/* STEP 3 */}
+        {/* STEP 3 - Launch Settings */}
         {step === 3 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-6">
@@ -409,7 +340,6 @@ export default function LauncherContent() {
                   placeholder="0.0" />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 font-medium">SOL</span>
               </div>
-              <p className="text-xs text-white/40 mt-2">Amount of SOL to buy immediately after launch (optional)</p>
             </div>
             <div>
               <label className="text-xs font-headline font-bold uppercase tracking-widest text-white/60 mb-2 block">Slippage tolerance</label>
@@ -423,13 +353,14 @@ export default function LauncherContent() {
           </div>
         )}
 
-        {/* STEP 4 */}
+        {/* STEP 4 - Review */}
         {step === 4 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-6">
               <Check className="h-6 w-6 text-secondary-container" />
               <h2 className="font-headline text-xl font-bold text-white">Review & Launch</h2>
             </div>
+
             <div className="rounded-lg bg-surface-container-high/50 p-6 space-y-4">
               <div className="flex items-start gap-4">
                 {imagePreview && (
@@ -444,12 +375,7 @@ export default function LauncherContent() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-                {[
-                  ['Fee', `${formData.feePercentage}%`],
-                  ['Recipients', String(formData.recipients.length)],
-                  ['Initial Buy', `${formData.initialBuy} SOL`],
-                  ['Slippage', `${formData.slippage}%`],
-                ].map(([k, v]) => (
+                {[['Fee', `${formData.feePercentage}%`], ['Recipients', String(formData.recipients.length)], ['Initial Buy', `${formData.initialBuy} SOL`], ['Slippage', `${formData.slippage}%`]].map(([k, v]) => (
                   <div key={k}>
                     <p className="text-xs text-white/40 uppercase tracking-wider mb-1">{k}</p>
                     <p className="text-white font-bold">{v}</p>
@@ -463,6 +389,7 @@ export default function LauncherContent() {
                 </div>
               )}
             </div>
+
             <div className="rounded-lg border border-yellow-500/25 bg-yellow-500/10 p-4">
               <p className="text-sm text-yellow-400 font-bold mb-2">⚠️ Important:</p>
               <ul className="text-xs text-yellow-400/80 space-y-1 list-disc list-inside">
@@ -474,19 +401,19 @@ export default function LauncherContent() {
 
             {/* Backend status */}
             <div className={`rounded-lg border p-3 flex items-center gap-3 ${
-              backendStatus === 'online' ? 'border-primary-container/30 bg-primary-container/10' :
-              backendStatus === 'offline' ? 'border-red-500/30 bg-red-500/10' :
-              'border-white/10 bg-white/5'
+              backendStatus === 'online' ? 'border-primary-container/30 bg-primary-container/10'
+              : backendStatus === 'offline' ? 'border-red-500/30 bg-red-500/10'
+              : 'border-white/10 bg-white/5'
             }`}>
               <span className={`h-2.5 w-2.5 rounded-full flex-shrink-0 ${
-                backendStatus === 'online' ? 'bg-primary-container animate-pulse' :
-                backendStatus === 'offline' ? 'bg-red-400' :
-                'bg-yellow-400 animate-pulse'
+                backendStatus === 'online' ? 'bg-primary-container animate-pulse'
+                : backendStatus === 'offline' ? 'bg-red-400'
+                : 'bg-yellow-400 animate-pulse'
               }`} />
               <p className={`text-xs font-medium ${
-                backendStatus === 'online' ? 'text-primary-container' :
-                backendStatus === 'offline' ? 'text-red-400' :
-                'text-yellow-400'
+                backendStatus === 'online' ? 'text-primary-container'
+                : backendStatus === 'offline' ? 'text-red-400'
+                : 'text-yellow-400'
               }`}>
                 {backendStatus === 'online' && 'Backend online — ready to launch'}
                 {backendStatus === 'offline' && 'Backend offline — server is starting up, please wait ~30s and try again'}
@@ -496,7 +423,7 @@ export default function LauncherContent() {
           </div>
         )}
 
-        {/* Navigation buttons */}
+        {/* Navigation */}
         <div className="mt-8 flex justify-between gap-4">
           {step > 1 ? (
             <button type="button" onClick={handleBack}
@@ -511,12 +438,13 @@ export default function LauncherContent() {
               Next <ChevronRight className="h-4 w-4" />
             </button>
           ) : (
-            <button type="button" onClick={handleLaunch} disabled={isLoading}
+            <button type="button" onClick={handleLaunch}
+              disabled={isLoading || backendStatus === 'offline'}
               className="flex items-center justify-center gap-2 rounded-lg bg-primary-container px-8 py-3 font-bold text-on-primary-container disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 transition-all min-w-[180px]">
               {isLoading ? (
                 <><SignalLoader size="sm" /><span>Launching...</span></>
-              ) : !walletAddress ? (
-                <><Rocket className="h-4 w-4" /><span>Connect & Launch</span></>
+              ) : !connected ? (
+                <><Rocket className="h-4 w-4" /><span>Connect Wallet</span></>
               ) : (
                 <><Rocket className="h-4 w-4" /><span>Launch Token</span></>
               )}
