@@ -20,6 +20,11 @@ export const metadata: Metadata = {
   title: 'Bags Signal - AI Token Intelligence',
   description: 'Fee share intelligence, AI signals, and one-click launch for Bags.fm on Solana.',
   metadataBase: new URL('http://localhost:3000'),
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/logo-transparant.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

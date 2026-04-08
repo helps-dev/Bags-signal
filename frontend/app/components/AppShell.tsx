@@ -148,7 +148,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <Link href="/" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden">
               <Image 
-                src="/logo.png" 
+                src="/logo-transparant.png" 
                 alt="Bags Signal Logo" 
                 width={40} 
                 height={40}
