@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
@@ -145,8 +146,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       >
         <div className="mb-10 mt-14 px-6">
           <Link href="/" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-container to-secondary-container">
-              <Rocket className="h-5 w-5 text-background" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden">
+              <Image 
+                src="/logo.png" 
+                alt="Bags Signal Logo" 
+                width={40} 
+                height={40}
+                className="object-contain"
+              />
             </div>
             <div>
               <div className="font-headline text-xl font-bold text-[#00ffa3]">Bags Signal</div>
