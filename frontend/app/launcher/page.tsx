@@ -6,7 +6,7 @@ import AppShell from '../components/AppShell'
 import { SignalLoader } from '../components/SignalLoader'
 
 // Dynamic import to prevent SSR issues with wallet
-const LauncherContent = dynamic(() => import('../components/LauncherContent'), {
+const LauncherContent = dynamic(() => import('../components/LauncherContent').then(mod => ({ default: mod.default })), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center min-h-screen">
