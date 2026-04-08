@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://bags-signal.onrender.com'
+
+    // Forward the request body directly to backend
     const body = await request.json()
+
     const {
       name,
       symbol,
@@ -14,6 +20,7 @@ export async function POST(request: NextRequest) {
       initialBuy,
       slippage,
       creatorWallet,
+      image,
     } = body
 
     if (!name || !symbol || !creatorWallet) {
@@ -23,13 +30,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Call backend API to launch token
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
     const response = await fetch(`${backendUrl}/api/tokens/launch`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name,
         symbol,
@@ -41,19 +44,19 @@ export async function POST(request: NextRequest) {
         initialBuy,
         slippage,
         creatorWallet,
+        image,
       }),
     })
 
+    const data = await response.json()
+
     if (!response.ok) {
-      const error = await response.json()
-      console.error('Backend API error:', error)
       return NextResponse.json(
-        { error: error.error || 'Failed to launch token' },
+        { error: data.error || 'Failed to launch token' },
         { status: response.status }
       )
     }
 
-    const data = await response.json()
     return NextResponse.json(data)
   } catch (error: any) {
     console.error('Launch API error:', error)

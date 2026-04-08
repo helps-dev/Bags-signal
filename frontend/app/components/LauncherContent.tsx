@@ -147,7 +147,10 @@ export default function LauncherContent() {
         reader.readAsDataURL(imageFile)
       })
 
-      const res = await fetch('/api/tokens/launch', {
+      // Call backend directly to avoid Vercel routing issues
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://bags-signal.onrender.com'
+
+      const res = await fetch(`${backendUrl}/api/tokens/launch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -157,15 +160,21 @@ export default function LauncherContent() {
         }),
       })
 
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Launch failed')
+      let result: any = {}
+      try {
+        result = await res.json()
+      } catch {
+        result = {}
       }
 
-      const result = await res.json()
+      if (!res.ok) {
+        throw new Error(result.error || `Server error: ${res.status}`)
+      }
 
       if (result.signature) {
         alert(`✅ Token launched!\n\nTransaction: ${result.signature}\n\nhttps://solscan.io/tx/${result.signature}`)
+      } else if (result.transaction || result.txBase64) {
+        alert('✅ Transaction created! Please sign in your wallet.')
       } else {
         alert('✅ Token launch initiated! Check your wallet for confirmation.')
       }
