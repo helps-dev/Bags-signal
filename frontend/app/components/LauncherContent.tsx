@@ -147,10 +147,8 @@ export default function LauncherContent() {
         reader.readAsDataURL(imageFile)
       })
 
-      // Call backend directly to avoid Vercel routing issues
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://bags-signal.onrender.com'
-
-      const res = await fetch(`${backendUrl}/api/tokens/launch`, {
+      // Use Next.js API route as proxy to avoid CORS issues
+      const res = await fetch('/api/tokens/launch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
