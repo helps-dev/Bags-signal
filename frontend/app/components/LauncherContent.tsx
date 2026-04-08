@@ -27,6 +27,7 @@ export default function LauncherContent() {
   const [uploadError, setUploadError] = useState<string>('')
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
   const [walletBusy, setWalletBusy] = useState(false)
+  const [backendStatus, setBackendStatus] = useState<'unknown' | 'online' | 'offline'>('unknown')
 
   const [formData, setFormData] = useState({
     name: '',
@@ -64,6 +65,19 @@ export default function LauncherContent() {
       p.off?.('disconnect', handleDisconnect)
     }
   }, [])
+
+  // Check backend health when reaching step 4
+  useEffect(() => {
+    if (step !== 4) return
+    setBackendStatus('unknown')
+    fetch('/api/tokens/launch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ _healthCheck: true, name: '_', symbol: '_', creatorWallet: '_' })
+    })
+      .then(r => setBackendStatus(r.status < 500 || r.status === 400 ? 'online' : 'offline'))
+      .catch(() => setBackendStatus('offline'))
+  }, [step])
 
   const connectWallet = useCallback(async () => {
     const phantom = getPhantom()
@@ -147,7 +161,6 @@ export default function LauncherContent() {
         reader.readAsDataURL(imageFile)
       })
 
-      // Use Next.js API route as proxy to avoid CORS issues
       const res = await fetch('/api/tokens/launch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -457,6 +470,28 @@ export default function LauncherContent() {
                 <li>Transaction will be sent to Bags.fm API</li>
                 <li>Token will be created on Solana blockchain</li>
               </ul>
+            </div>
+
+            {/* Backend status */}
+            <div className={`rounded-lg border p-3 flex items-center gap-3 ${
+              backendStatus === 'online' ? 'border-primary-container/30 bg-primary-container/10' :
+              backendStatus === 'offline' ? 'border-red-500/30 bg-red-500/10' :
+              'border-white/10 bg-white/5'
+            }`}>
+              <span className={`h-2.5 w-2.5 rounded-full flex-shrink-0 ${
+                backendStatus === 'online' ? 'bg-primary-container animate-pulse' :
+                backendStatus === 'offline' ? 'bg-red-400' :
+                'bg-yellow-400 animate-pulse'
+              }`} />
+              <p className={`text-xs font-medium ${
+                backendStatus === 'online' ? 'text-primary-container' :
+                backendStatus === 'offline' ? 'text-red-400' :
+                'text-yellow-400'
+              }`}>
+                {backendStatus === 'online' && 'Backend online — ready to launch'}
+                {backendStatus === 'offline' && 'Backend offline — server is starting up, please wait ~30s and try again'}
+                {backendStatus === 'unknown' && 'Checking backend status...'}
+              </p>
             </div>
           </div>
         )}
