@@ -55,3 +55,9 @@ test-launch.json
 
 # Upstash Redis
 .upstash/
+
+# Documentation files (local only)
+CRITICAL-ISSUES-REPORT.md
+FIX-COMPLETE-SUMMARY.md
+DEPLOY-NOW.md
+DEPLOYMENT-STATUS.md
