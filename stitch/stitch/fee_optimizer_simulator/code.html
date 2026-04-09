@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bags Signal - Fee Optimizer &amp; Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error": "#690005",
+            "inverse-primary": "#006d43",
+            "on-error-container": "#ffdad6",
+            "on-tertiary-fixed-variant": "#5e4200",
+            "surface-bright": "#3a3939",
+            "primary-container": "#00ffa3",
+            "error-container": "#93000a",
+            "on-background": "#e5e2e1",
+            "on-primary-fixed-variant": "#005231",
+            "on-primary-fixed": "#002111",
+            "inverse-surface": "#e5e2e1",
+            "surface-container-high": "#2a2a2a",
+            "error": "#ffb4ab",
+            "tertiary": "#fffbff",
+            "on-tertiary-fixed": "#271900",
+            "outline": "#849588",
+            "background": "#131313",
+            "on-tertiary": "#412d00",
+            "on-surface-variant": "#b9cbbd",
+            "secondary": "#b9f1ff",
+            "surface-container-low": "#1c1b1b",
+            "surface-container": "#201f1f",
+            "secondary-container": "#00e0ff",
+            "surface": "#131313",
+            "on-secondary-fixed-variant": "#004e5a",
+            "on-tertiary-container": "#825c00",
+            "primary-fixed-dim": "#00e290",
+            "tertiary-fixed-dim": "#ffba20",
+            "primary-fixed": "#52ffac",
+            "on-primary": "#003920",
+            "surface-tint": "#00e290",
+            "secondary-fixed-dim": "#00daf8",
+            "on-primary-container": "#007146",
+            "on-secondary-fixed": "#001f25",
+            "surface-variant": "#353534",
+            "surface-container-lowest": "#0e0e0e",
+            "outline-variant": "#3a4a3f",
+            "on-secondary-container": "#005f6d",
+            "primary": "#f5fff5",
+            "inverse-on-surface": "#313030",
+            "secondary-fixed": "#a5eeff",
+            "tertiary-fixed": "#ffdea8",
+            "on-secondary": "#00363f",
+            "on-surface": "#e5e2e1",
+            "tertiary-container": "#ffdb9e",
+            "surface-dim": "#131313",
+            "surface-container-highest": "#353534"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "fontFamily": {
+            "headline": ["Space Grotesk"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 4px;
+      background: #3a4a3f;
+      border-radius: 2px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #00FFA3;
+      margin-top: -6px;
+      box-shadow: 0 0 10px rgba(0, 255, 163, 0.5);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar (Fixed) -->
+<nav class="fixed top-0 w-full z-50 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center px-6 py-4 w-full shadow-[0_8px_32px_0_rgba(0,255,163,0.05)]">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold text-[#00FFA3] tracking-tighter font-['Space_Grotesk']">Bags Signal</span>
+<div class="hidden md:flex gap-6">
+<a class="text-white/60 font-['Space_Grotesk'] tracking-tight hover:text-[#00FFA3] hover:bg-white/5 transition-all px-3 py-1 rounded" href="#">Signals</a>
+<a class="text-[#00FFA3] font-bold font-['Space_Grotesk'] tracking-tight" href="#">Optimizer</a>
+<a class="text-white/60 font-['Space_Grotesk'] tracking-tight hover:text-[#00FFA3] hover:bg-white/5 transition-all px-3 py-1 rounded" href="#">Launcher</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-white/60 hover:text-[#00FFA3] transition-all" data-icon="notifications">notifications</button>
+<button class="bg-primary-container text-on-primary-container px-6 py-2 font-headline font-bold text-sm tracking-tight hover:brightness-110 active:scale-95 transition-all">Connect Wallet</button>
+</div>
+<div class="absolute bottom-0 left-0 w-full bg-gradient-to-b from-[#1C1B1B] to-transparent h-px"></div>
+</nav>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-[#1C1B1B] border-r border-white/5 shadow-2xl shadow-black flex flex-col h-full py-8 hidden md:flex">
+<div class="px-6 mb-12 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container/10 flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-primary-container" data-icon="rocket_launch">rocket_launch</span>
+</div>
+<div>
+<h2 class="text-xl font-bold text-[#00FFA3] font-headline">Bags Signal</h2>
+<p class="text-[10px] uppercase tracking-widest text-white/40">Solana Intelligence</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="text-white/40 flex items-center px-6 py-4 font-['Space_Grotesk'] text-sm font-medium hover:bg-white/5 hover:text-white transition-colors cursor-pointer group" href="#">
+<span class="material-symbols-outlined mr-3 group-hover:text-primary-container" data-icon="sensors">sensors</span> Signals
+      </a>
+<a class="text-white/40 flex items-center px-6 py-4 font-['Space_Grotesk'] text-sm font-medium hover:bg-white/5 hover:text-white transition-colors cursor-pointer group" href="#">
+<span class="material-symbols-outlined mr-3 group-hover:text-primary-container" data-icon="rocket_launch">rocket_launch</span> Launcher
+      </a>
+<a class="text-[#00FFA3] bg-[#00FFA3]/10 border-r-2 border-[#00FFA3] flex items-center px-6 py-4 font-['Space_Grotesk'] text-sm font-medium cursor-pointer" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="equalizer" style="font-variation-settings: 'FILL' 1;">equalizer</span> Optimizer
+      </a>
+<a class="text-white/40 flex items-center px-6 py-4 font-['Space_Grotesk'] text-sm font-medium hover:bg-white/5 hover:text-white transition-colors cursor-pointer group" href="#">
+<span class="material-symbols-outlined mr-3 group-hover:text-primary-container" data-icon="account_balance_wallet">account_balance_wallet</span> Portfolio
+      </a>
+<a class="text-white/40 flex items-center px-6 py-4 font-['Space_Grotesk'] text-sm font-medium hover:bg-white/5 hover:text-white transition-colors cursor-pointer group" href="#">
+<span class="material-symbols-outlined mr-3 group-hover:text-primary-container" data-icon="settings">settings</span> Settings
+      </a>
+</nav>
+<div class="px-6 mt-auto">
+<div class="p-4 bg-surface-container rounded border border-white/5 relative overflow-hidden">
+<div class="absolute -top-12 -right-12 w-24 h-24 bg-primary-container/10 blur-3xl"></div>
+<p class="text-xs text-white/60 mb-3 relative z-10">Advanced features unlocked</p>
+<button class="w-full py-2 bg-white/5 hover:bg-white/10 text-primary-container text-xs font-bold font-headline transition-all border border-primary-container/20 relative z-10">Upgrade to Pro</button>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-0 md:ml-64 pt-24 min-h-screen">
+<div class="max-w-7xl mx-auto px-6 pb-20">
+<!-- Header & Intro -->
+<div class="mb-12">
+<h1 class="text-4xl font-extrabold font-headline text-white tracking-tight mb-2">Fee Optimizer <span class="text-secondary-container">&amp; Simulator</span></h1>
+<p class="text-on-surface-variant max-w-2xl font-light">Optimize your Solana protocol revenue through high-fidelity volume simulation. Adjust fee parameters and recipient distribution to find the perfect liquidity balance.</p>
+</div>
+<!-- Split Layout View -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Left Column: Inputs -->
+<section class="lg:col-span-5 space-y-6">
+<div class="p-8 bg-surface-container-low rounded-xl border-l border-primary-container/30 relative overflow-hidden">
+<h3 class="text-lg font-headline font-semibold mb-8 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="tune">tune</span> Simulation Parameters
+            </h3>
+<!-- Sliders -->
+<div class="space-y-8">
+<div>
+<div class="flex justify-between mb-4">
+<label class="text-xs font-bold uppercase tracking-wider text-white/60">Daily Volume (SOL)</label>
+<span class="text-primary-container font-headline font-bold">12,500 SOL</span>
+</div>
+<input class="w-full" max="50000" min="0" step="100" type="range" value="12500"/>
+<div class="flex justify-between mt-2 text-[10px] text-white/20 uppercase tracking-tighter">
+<span>0 SOL</span>
+<span>50,000 SOL</span>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-4">
+<label class="text-xs font-bold uppercase tracking-wider text-white/60">Target Fee Percentage</label>
+<span class="text-secondary-container font-headline font-bold">0.35%</span>
+</div>
+<input class="w-full" max="1" min="0" step="0.01" type="range" value="0.35"/>
+<div class="flex justify-between mt-2 text-[10px] text-white/20 uppercase tracking-tighter">
+<span>0%</span>
+<span>1.0%</span>
+</div>
+</div>
+</div>
+<!-- Fee Recipients -->
+<div class="mt-12">
+<div class="flex justify-between items-center mb-6">
+<label class="text-xs font-bold uppercase tracking-wider text-white/60">Fee Recipients</label>
+<button class="text-[10px] font-bold text-primary-container flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span> Add Wallet
+                </button>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-3 p-3 bg-surface-container rounded border border-white/5">
+<div class="w-8 h-8 rounded bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-lg" data-icon="shield_person">shield_person</span>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold text-white">Creator Wallet</p>
+<p class="text-[10px] text-white/40 truncate">7xP...Q9z (Primary)</p>
+</div>
+<div class="text-right">
+<span class="text-xs font-headline font-bold text-white">70%</span>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 bg-surface-container rounded border border-white/5 opacity-80">
+<div class="w-8 h-8 rounded bg-secondary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary-container text-lg" data-icon="handshake">handshake</span>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold text-white">Partner Node</p>
+<p class="text-[10px] text-white/40 truncate">4jH...L2k</p>
+</div>
+<div class="text-right">
+<span class="text-xs font-headline font-bold text-white">30%</span>
+</div>
+<button class="material-symbols-outlined text-error/40 hover:text-error transition-all text-sm ml-2" data-icon="close">close</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Results & Visualization -->
+<section class="lg:col-span-7 space-y-6">
+<!-- Bento Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="p-6 bg-surface-container rounded-xl border border-white/5">
+<p class="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Projected Daily</p>
+<h4 class="text-2xl font-headline font-bold text-primary-container tracking-tight">43.75 SOL</h4>
+<p class="text-[10px] text-white/20 mt-1">≈ $6,562.50 USD</p>
+</div>
+<div class="p-6 bg-surface-container rounded-xl border border-white/5">
+<p class="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Projected Weekly</p>
+<h4 class="text-2xl font-headline font-bold text-white tracking-tight">306.25 SOL</h4>
+<p class="text-[10px] text-white/20 mt-1">≈ $45,937.50 USD</p>
+</div>
+<div class="p-6 bg-surface-container rounded-xl border border-white/5 bg-gradient-to-br from-surface-container to-surface-container-high">
+<p class="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Projected Monthly</p>
+<h4 class="text-2xl font-headline font-bold text-secondary-container tracking-tight">1,312.5 SOL</h4>
+<p class="text-[10px] text-white/20 mt-1">≈ $196,875.00 USD</p>
+</div>
+</div>
+<!-- Comparison Chart Visualization -->
+<div class="p-8 bg-surface-container-high rounded-xl border border-white/5 relative h-80 flex flex-col">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h3 class="text-lg font-headline font-semibold">Yield Comparison</h3>
+<p class="text-xs text-white/40">Current Config vs. Optimal AI Suggestion</p>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-white/20"></div>
+<span class="text-[10px] text-white/60">Current</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary-container"></div>
+<span class="text-[10px] text-white/60">Optimal</span>
+</div>
+</div>
+</div>
+<!-- Abstract Chart Mockup -->
+<div class="flex-1 flex items-end gap-2 px-2">
+<div class="w-full flex flex-col items-center gap-2">
+<div class="w-full bg-white/5 h-16 rounded-t transition-all hover:bg-white/10"></div>
+<span class="text-[8px] text-white/20">M</span>
+</div>
+<div class="w-full flex flex-col items-center gap-2">
+<div class="w-full bg-white/5 h-20 rounded-t transition-all hover:bg-white/10"></div>
+<span class="text-[8px] text-white/20">T</span>
+</div>
+<div class="w-full flex flex-col items-center gap-2 relative">
+<div class="absolute -top-4 text-[8px] text-primary-container font-bold">+12%</div>
+<div class="w-full bg-primary-container/20 h-32 rounded-t border-t-2 border-primary-container"></div>
+<span class="text-[8px] text-white/20">W</span>
+</div>
+<div class="w-full flex flex-col items-center gap-2">
+<div class="w-full bg-primary-container/20 h-40 rounded-t border-t-2 border-primary-container"></div>
+<span class="text-[8px] text-white/20">T</span>
+</div>
+<div class="w-full flex flex-col items-center gap-2">
+<div class="w-full bg-primary-container/20 h-28 rounded-t border-t-2 border-primary-container"></div>
+<span class="text-[8px] text-white/20">F</span>
+</div>
+<div class="w-full flex flex-col items-center gap-2">
+<div class="w-full bg-white/5 h-24 rounded-t transition-all hover:bg-white/10"></div>
+<span class="text-[8px] text-white/20">S</span>
+</div>
+<div class="w-full flex flex-col items-center gap-2">
+<div class="w-full bg-white/5 h-12 rounded-t transition-all hover:bg-white/10"></div>
+<span class="text-[8px] text-white/20">S</span>
+</div>
+</div>
+</div>
+<!-- Final Action & Breakdown -->
+<div class="p-8 bg-primary-container/5 rounded-xl border border-primary-container/20">
+<div class="flex flex-col md:flex-row justify-between gap-8 items-center">
+<div class="space-y-2">
+<h4 class="text-sm font-bold font-headline text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="info">info</span> Transaction Breakdown
+                </h4>
+<div class="flex flex-wrap gap-4 text-xs text-white/60">
+<div class="flex items-center gap-1">
+<span class="text-white/40">Gas Cost:</span>
+<span class="text-tertiary-fixed-dim">0.000005 SOL</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="text-white/40">Priority Fee:</span>
+<span class="text-primary-container">Medium</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="text-white/40">Status:</span>
+<span class="text-secondary-container">Ready</span>
+</div>
+</div>
+</div>
+<button class="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-primary-fixed to-primary-container text-on-primary-fixed font-headline font-extrabold text-sm uppercase tracking-widest rounded-lg shadow-[0_8px_32px_0_rgba(0,255,163,0.2)] hover:scale-[1.02] active:scale-95 transition-all">
+                Apply Configuration
+              </button>
+</div>
+</div>
+</section>
+</div>
+<!-- Comparison AI Insight Card -->
+<div class="mt-8 p-6 bg-surface-container-lowest rounded-xl border border-white/5 flex items-center gap-6">
+<div class="w-12 h-12 bg-secondary-container/10 flex items-center justify-center rounded-full shrink-0">
+<span class="material-symbols-outlined text-secondary-container" data-icon="psychology" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<div class="flex-1">
+<p class="text-sm text-white/80 font-medium">AI Intelligence Alert</p>
+<p class="text-xs text-white/40">Lowering the fee to <span class="text-primary-container font-bold">0.25%</span> during peak UTC hours could increase transaction throughput by <span class="text-secondary-container font-bold">18%</span> based on historical liquidity trends.</p>
+</div>
+<button class="text-xs font-bold text-primary-container hover:underline px-4 py-2 bg-white/5 rounded">View Insight</button>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 px-8 bg-[#131313] border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 ml-0 md:ml-64">
+<p class="font-['Inter'] text-xs text-white/40">© 2024 Bags Signal. Built for Solana.</p>
+<div class="flex gap-8">
+<a class="font-['Inter'] text-xs text-white/40 hover:text-[#00FFA3] transition-colors hover:underline underline-offset-4" href="#">Documentation</a>
+<a class="font-['Inter'] text-xs text-white/40 hover:text-[#00FFA3] transition-colors hover:underline underline-offset-4" href="#">Security Audit</a>
+<a class="font-['Inter'] text-xs text-white/40 hover:text-[#00FFA3] transition-colors hover:underline underline-offset-4" href="#">Twitter</a>
+<a class="font-['Inter'] text-xs text-white/40 hover:text-[#00FFA3] transition-colors hover:underline underline-offset-4" href="#">Discord</a>
+</div>
+</footer>
+</body></html>

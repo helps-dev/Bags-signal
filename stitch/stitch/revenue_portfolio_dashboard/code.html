@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bags Signal - Revenue Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#690005",
+                        "inverse-primary": "#006d43",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#5e4200",
+                        "surface-bright": "#3a3939",
+                        "primary-container": "#00ffa3",
+                        "error-container": "#93000a",
+                        "on-background": "#e5e2e1",
+                        "on-primary-fixed-variant": "#005231",
+                        "on-primary-fixed": "#002111",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-container-high": "#2a2a2a",
+                        "error": "#ffb4ab",
+                        "tertiary": "#fffbff",
+                        "on-tertiary-fixed": "#271900",
+                        "outline": "#849588",
+                        "background": "#131313",
+                        "on-tertiary": "#412d00",
+                        "on-surface-variant": "#b9cbbd",
+                        "secondary": "#b9f1ff",
+                        "surface-container-low": "#1c1b1b",
+                        "surface-container": "#201f1f",
+                        "secondary-container": "#00e0ff",
+                        "surface": "#131313",
+                        "on-secondary-fixed-variant": "#004e5a",
+                        "on-tertiary-container": "#825c00",
+                        "primary-fixed-dim": "#00e290",
+                        "tertiary-fixed-dim": "#ffba20",
+                        "primary-fixed": "#52ffac",
+                        "on-primary": "#003920",
+                        "surface-tint": "#00e290",
+                        "secondary-fixed-dim": "#00daf8",
+                        "on-primary-container": "#007146",
+                        "on-secondary-fixed": "#001f25",
+                        "surface-variant": "#353534",
+                        "surface-container-lowest": "#0e0e0e",
+                        "outline-variant": "#3a4a3f",
+                        "on-secondary-container": "#005f6d",
+                        "primary": "#f5fff5",
+                        "inverse-on-surface": "#313030",
+                        "secondary-fixed": "#a5eeff",
+                        "tertiary-fixed": "#ffdea8",
+                        "on-secondary": "#00363f",
+                        "on-surface": "#e5e2e1",
+                        "tertiary-container": "#ffdb9e",
+                        "surface-dim": "#131313",
+                        "surface-container-highest": "#353534"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glow-overlay {
+            background: radial-gradient(circle at 50% 50%, rgba(0, 255, 163, 0.05) 0%, transparent 70%);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<nav class="fixed top-0 w-full z-50 bg-[#131313]/80 backdrop-blur-xl flex justify-between items-center px-6 py-4 w-full shadow-[0_8px_32px_0_rgba(0,255,163,0.05)] font-['Space_Grotesk'] tracking-tight">
+<div class="text-2xl font-bold text-[#00FFA3] tracking-tighter">Bags Signal</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-white/60 hover:text-[#00FFA3] hover:bg-white/5 transition-all px-3 py-1 rounded-sm" href="#">Signals</a>
+<a class="text-white/60 hover:text-[#00FFA3] hover:bg-white/5 transition-all px-3 py-1 rounded-sm" href="#">Launcher</a>
+<a class="text-white/60 hover:text-[#00FFA3] hover:bg-white/5 transition-all px-3 py-1 rounded-sm" href="#">Optimizer</a>
+<a class="text-[#00FFA3] font-bold px-3 py-1 rounded-sm bg-[#00FFA3]/5" href="#">Portfolio</a>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-white/60 cursor-pointer hover:text-[#00FFA3]">notifications</span>
+<button class="bg-primary-container text-on-primary-container px-6 py-2 font-bold text-sm tracking-wide active:scale-95 duration-150 rounded-sm">Connect Wallet</button>
+</div>
+</nav>
+<aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-[#1C1B1B] border-r border-white/5 flex flex-col h-full py-8 font-['Space_Grotesk'] text-sm font-medium">
+<div class="px-6 mb-12">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
+</div>
+<div>
+<h1 class="text-xl font-bold text-[#00FFA3]">Bags Signal</h1>
+<p class="text-[10px] text-white/40 uppercase tracking-widest">Solana Intelligence</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="text-white/40 flex items-center px-6 py-4 hover:bg-white/5 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined mr-4">sensors</span>
+                Signals
+            </a>
+<a class="text-white/40 flex items-center px-6 py-4 hover:bg-white/5 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined mr-4">rocket_launch</span>
+                Launcher
+            </a>
+<a class="text-white/40 flex items-center px-6 py-4 hover:bg-white/5 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined mr-4">equalizer</span>
+                Optimizer
+            </a>
+<a class="text-[#00FFA3] bg-[#00FFA3]/10 border-r-2 border-[#00FFA3] flex items-center px-6 py-4" href="#">
+<span class="material-symbols-outlined mr-4" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+                Portfolio
+            </a>
+<a class="text-white/40 flex items-center px-6 py-4 hover:bg-white/5 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined mr-4">settings</span>
+                Settings
+            </a>
+</nav>
+<div class="px-6 mt-auto">
+<div class="bg-surface-container rounded-lg p-4 border border-white/5 relative overflow-hidden">
+<div class="relative z-10">
+<p class="text-xs text-white/60 mb-2">Creator Tier</p>
+<p class="text-lg font-bold text-white mb-4">Elite Access</p>
+<button class="w-full bg-[#00FFA3] text-on-primary-container py-2 text-xs font-bold rounded-sm hover:opacity-90 transition-opacity">Upgrade to Pro</button>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-6xl">verified</span>
+</div>
+</div>
+</div>
+</aside>
+<main class="ml-64 pt-24 pb-12 px-10 min-h-screen relative overflow-hidden">
+<div class="absolute top-0 right-0 w-[500px] h-[500px] glow-overlay pointer-events-none"></div>
+<header class="mb-10 flex justify-between items-end">
+<div>
+<h2 class="text-4xl font-headline font-bold tracking-tight mb-2">Revenue Dashboard</h2>
+<p class="text-on-surface-variant font-medium">Real-time performance metrics for your launched tokens and referrals.</p>
+</div>
+<div class="flex gap-4">
+<button class="px-5 py-2 border border-outline-variant/20 hover:bg-white/5 transition-all text-sm font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">download</span>
+                    Export CSV
+                </button>
+<button class="bg-primary-container text-on-primary-container px-6 py-2 font-bold text-sm tracking-wide active:scale-95 duration-150">
+                    Claim All Fees
+                </button>
+</div>
+</header>
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<div class="bg-surface-container-low p-8 rounded-xl border border-white/5 relative group hover:border-[#00FFA3]/20 transition-all">
+<p class="text-sm font-medium text-on-surface-variant mb-4 uppercase tracking-widest">Total Lifetime Fees</p>
+<div class="flex items-baseline gap-3">
+<h3 class="text-5xl font-headline font-bold text-[#00FFA3]">1,402.5</h3>
+<span class="text-xl font-headline text-on-primary-container/60">SOL</span>
+</div>
+<p class="text-on-surface-variant/60 mt-2 font-medium">≈ $198,452.12 USD</p>
+<div class="absolute top-8 right-8 text-[#00FFA3]/20 group-hover:text-[#00FFA3]/40 transition-colors">
+<span class="material-symbols-outlined text-4xl">payments</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-8 rounded-xl border border-white/5 relative group hover:border-[#00E0FF]/20 transition-all">
+<p class="text-sm font-medium text-on-surface-variant mb-4 uppercase tracking-widest">Tokens Launched</p>
+<div class="flex items-baseline gap-3">
+<h3 class="text-5xl font-headline font-bold text-[#00E0FF]">24</h3>
+<span class="text-xl font-headline text-secondary-container/60">ACTIVE</span>
+</div>
+<p class="text-on-surface-variant/60 mt-2 font-medium">+2 in the last 7 days</p>
+<div class="absolute top-8 right-8 text-[#00E0FF]/20 group-hover:text-[#00E0FF]/40 transition-colors">
+<span class="material-symbols-outlined text-4xl">rocket</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-8 rounded-xl border border-white/5 relative group hover:border-[#FFBA20]/20 transition-all">
+<p class="text-sm font-medium text-on-surface-variant mb-4 uppercase tracking-widest">Partner Referrals</p>
+<div class="flex items-baseline gap-3">
+<h3 class="text-5xl font-headline font-bold text-[#FFBA20]">158</h3>
+<span class="text-xl font-headline text-tertiary-fixed-dim/60">WALLET</span>
+</div>
+<p class="text-on-surface-variant/60 mt-2 font-medium">12.4% conversion rate</p>
+<div class="absolute top-8 right-8 text-[#FFBA20]/20 group-hover:text-[#FFBA20]/40 transition-colors">
+<span class="material-symbols-outlined text-4xl">group_add</span>
+</div>
+</div>
+</section>
+<section class="mb-12">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-xl font-headline font-bold">Active Token Positions</h3>
+<div class="flex items-center gap-2 text-xs font-bold text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-[#00FFA3] animate-pulse"></span>
+                    LIVE MONITORING
+                </div>
+</div>
+<div class="bg-surface-container rounded-xl overflow-hidden border border-white/5">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-on-surface-variant text-[10px] uppercase tracking-widest border-b border-white/5">
+<th class="px-6 py-4 font-bold">Token Mint</th>
+<th class="px-6 py-4 font-bold">Performance (24h)</th>
+<th class="px-6 py-4 font-bold">Volume</th>
+<th class="px-6 py-4 font-bold">Accumulated Fees</th>
+<th class="px-6 py-4 font-bold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-surface-container-highest rounded-sm flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Abstract digital crystal in neon green and black palette representing a futuristic crypto token" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCI0jNEFGG-NenPI_sRi35YuEa5SrrpLltQKaho_IWy8vxzAMva_yScovdAEolsY664VeabODYeHdZSJxlG0zV8vvIX4Sv-5YmQ1Qgc1hgsTU4FwzSalYx63O8PPTcH5NrP73-lsQrWa9HaDVRZKeR8yYo91ReNZWd2Yaa4_7iqFGg0Im6iZD8wnqVCaPu2zSoj_dvUNafCA5-fvOEWqlZ9juLn2_It2GITn1djAiPcwpEspHxrLnRLn8m-dljK6RcNpXl04GLXrfQ"/>
+</div>
+<div>
+<p class="font-bold text-white tracking-tight">SOLBEAR</p>
+<p class="text-xs text-white/40 font-mono">B7x9...p4mQ</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="w-32 h-8 bg-surface-container-high rounded-sm relative overflow-hidden">
+<svg class="w-full h-full stroke-[#00FFA3] stroke-2 fill-none" viewbox="0 0 100 20">
+<polyline points="0,15 10,12 20,18 30,10 40,5 50,12 60,8 70,2 80,5 90,0 100,2"></polyline>
+</svg>
+</div>
+</td>
+<td class="px-6 py-5">
+<p class="font-bold text-white tracking-tight">$4.2M</p>
+<p class="text-[10px] text-[#00FFA3] font-bold">+12.4%</p>
+</td>
+<td class="px-6 py-5">
+<p class="font-bold text-[#00FFA3] tracking-tight">12.42 SOL</p>
+<p class="text-[10px] text-white/40 font-medium">CLAIMABLE</p>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="text-xs font-bold text-[#00FFA3] hover:underline transition-all">Claim Fees</button>
+</td>
+</tr>
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-surface-container-highest rounded-sm flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Cyberpunk geometric sphere with glowing cyan circuits and holographic elements on dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCS13aBfpZ0v5qWrTCrfIdfO5lrDLsRa89b1AQ_SYXKIjuQpAKT0K1vtOgQ34kxuE_6cYds5uzBP2UVmpnlwaVJw6PA65mW1jtnAexHuHw2bYY4YvJKZnbamAf4ZGgu--dVyL7KGKARaaZvfeemWcwDCgeMfNM0Ne6r7GdC1GjYRzEffcjl8NksTH0Dm9lc5IYv_42W8lVbGgAGmO7i4bccaQ08O2Ea8P7x52tWORQhQqyTzZSOUWc6rcRnM_6dwJunwWe2e5Oeu8g"/>
+</div>
+<div>
+<p class="font-bold text-white tracking-tight">NEON_APE</p>
+<p class="text-xs text-white/40 font-mono">z8v2...k1uR</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="w-32 h-8 bg-surface-container-high rounded-sm relative overflow-hidden">
+<svg class="w-full h-full stroke-[#FFB4AB] stroke-2 fill-none" viewbox="0 0 100 20">
+<polyline points="0,5 10,8 20,2 30,12 40,8 50,15 60,18 70,14 80,18 90,20 100,18"></polyline>
+</svg>
+</div>
+</td>
+<td class="px-6 py-5">
+<p class="font-bold text-white tracking-tight">$842K</p>
+<p class="text-[10px] text-[#FFB4AB] font-bold">-4.1%</p>
+</td>
+<td class="px-6 py-5">
+<p class="font-bold text-[#00FFA3] tracking-tight">3.18 SOL</p>
+<p class="text-[10px] text-white/40 font-medium">CLAIMABLE</p>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="text-xs font-bold text-[#00FFA3] hover:underline transition-all">Claim Fees</button>
+</td>
+</tr>
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-surface-container-highest rounded-sm flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Luminous golden particles swirling in a dark void with high contrast amber lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALapnqMyDnL-QFqLD7hA3rgd37BAFSOmgykW7Y1-2-_QT6v47qcnozR5VMrneDa5v6bfPyah-xBlW63Skp5fRiWhJbZEEbVy4YdN7ibwS88QryaxcxhZG-R2nwCOEUskJWdaKceh3OasBK8TSFIwWdsh5olPTn6DjRzSM9B6M2FMZ8TX9kKXANLiGXGYAqJh-3KxIfL-QLCpSH49oTc06xGK3zUm43VsK9LfcH3M1pxlm6X8N7n8xOvVKiM6WsEx3ogqnCC12zM5I"/>
+</div>
+<div>
+<p class="font-bold text-white tracking-tight">GOLD_SIGNAL</p>
+<p class="text-xs text-white/40 font-mono">f3r5...m8oN</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="w-32 h-8 bg-surface-container-high rounded-sm relative overflow-hidden">
+<svg class="w-full h-full stroke-[#00FFA3] stroke-2 fill-none" viewbox="0 0 100 20">
+<polyline points="0,18 20,15 40,16 60,5 80,2 100,1"></polyline>
+</svg>
+</div>
+</td>
+<td class="px-6 py-5">
+<p class="font-bold text-white tracking-tight">$12.1M</p>
+<p class="text-[10px] text-[#00FFA3] font-bold">+88.2%</p>
+</td>
+<td class="px-6 py-5">
+<p class="font-bold text-[#00FFA3] tracking-tight">42.88 SOL</p>
+<p class="text-[10px] text-white/40 font-medium">CLAIMABLE</p>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="text-xs font-bold text-[#00FFA3] hover:underline transition-all">Claim Fees</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+<div>
+<h3 class="text-xl font-headline font-bold mb-6">Recent Transactions</h3>
+<div class="space-y-3">
+<div class="bg-surface-container-low p-4 rounded-lg flex items-center justify-between border border-white/5 hover:border-[#00FFA3]/10 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-[#00FFA3]/10 flex items-center justify-center text-[#00FFA3]">
+<span class="material-symbols-outlined text-xl">vertical_align_bottom</span>
+</div>
+<div>
+<p class="text-sm font-bold tracking-tight">Fee Claim Success</p>
+<p class="text-xs text-white/40">From: GOLD_SIGNAL • 2 mins ago</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-[#00FFA3]">+15.20 SOL</p>
+<p class="text-[10px] text-white/20 uppercase tracking-widest">Completed</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-lg flex items-center justify-between border border-white/5 hover:border-[#00FFA3]/10 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container/10 flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined text-xl">share_reviews</span>
+</div>
+<div>
+<p class="text-sm font-bold tracking-tight">Referral Distribution</p>
+<p class="text-xs text-white/40">From: Partner ID #4829 • 1 hour ago</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-secondary-container">+1.05 SOL</p>
+<p class="text-[10px] text-white/20 uppercase tracking-widest">Completed</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-lg flex items-center justify-between border border-white/5 hover:border-[#00FFA3]/10 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-[#00FFA3]/10 flex items-center justify-center text-[#00FFA3]">
+<span class="material-symbols-outlined text-xl">vertical_align_bottom</span>
+</div>
+<div>
+<p class="text-sm font-bold tracking-tight">Fee Claim Success</p>
+<p class="text-xs text-white/40">From: SOLBEAR • 5 hours ago</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-[#00FFA3]">+4.12 SOL</p>
+<p class="text-[10px] text-white/20 uppercase tracking-widest">Completed</p>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container rounded-xl p-8 border border-white/5 relative overflow-hidden">
+<div class="relative z-10">
+<h3 class="text-xl font-headline font-bold mb-2">Revenue Growth AI</h3>
+<p class="text-on-surface-variant mb-6 text-sm">Based on current volume trends, your claimable fees are projected to increase by 18% over the next 48 hours.</p>
+<div class="bg-[#131313] p-5 rounded-lg border border-[#00E0FF]/20 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-secondary-container flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">auto_awesome</span>
+                                BOT OPTIMIZATION TIP
+                            </span>
+<span class="text-[10px] text-white/40">AI-DRIVEN</span>
+</div>
+<p class="text-sm leading-relaxed">Increasing the liquidity provision for <span class="text-[#00FFA3] font-bold">GOLD_SIGNAL</span> by 5% could potentially unlock an additional 2.5 SOL per day in trading fee capture.</p>
+<button class="text-xs font-bold text-secondary-container bg-secondary-container/10 py-2 rounded-sm hover:bg-secondary-container/20 transition-all">Apply Optimization</button>
+</div>
+</div>
+<div class="absolute -bottom-12 -right-12 text-[#00E0FF]/5">
+<span class="material-symbols-outlined text-[180px]">psychology</span>
+</div>
+</div>
+</section>
+</main>
+<footer class="w-full py-12 px-8 border-t border-white/5 bg-[#131313] flex flex-col md:flex-row justify-between items-center gap-4 ml-64 font-['Inter'] text-xs text-white/40">
+<div>
+            © 2024 Bags Signal. Built for Solana.
+        </div>
+<div class="flex gap-8">
+<a class="hover:text-[#00FFA3] transition-colors underline-offset-4 hover:underline" href="#">Documentation</a>
+<a class="hover:text-[#00FFA3] transition-colors underline-offset-4 hover:underline" href="#">Security Audit</a>
+<a class="hover:text-[#00FFA3] transition-colors underline-offset-4 hover:underline" href="#">Twitter</a>
+<a class="hover:text-[#00FFA3] transition-colors underline-offset-4 hover:underline" href="#">Discord</a>
+</div>
+</footer>
+</body></html>

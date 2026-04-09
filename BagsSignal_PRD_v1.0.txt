@@ -1,0 +1,218 @@
+﻿
+BAGS SIGNAL
+AI Token Intelligence Platform
+
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+
+Versi Dokumenv1.0.0TanggalApril 2026AuthorBags Signal TeamHackathonBags.fm Hackathon - $4M FundStatusDraft - For Review
+
+
+1. Executive Summary
+Bags Signal adalah platform intelijen token berbasis AI yang dibangun di atas ekosistem Bags.fm dan jaringan Solana. Platform ini dirancang untuk memenangkan Bags.fm Hackathon dengan menyediakan utilitas nyata bagi trader, kreator token, dan developer yang berinteraksi dengan Bags App Store.
+
+Platform ini menggabungkan tiga pilar utama yang menjadi fokus penilaian hackathon:
+• Fee Share Intelligence: Kalkulator dan optimizer real-time untuk memaksimalkan pendapatan fee sharing bagi creator dan partner.
+• AI Signal Engine: Sistem scoring berbasis machine learning untuk menilai potensi setiap token launch di Bags.fm berdasarkan on-chain data, liquidity depth, dan social signals.
+• One-Click Token Launcher: Interface terintegrasi untuk launch token + konfigurasi fee share + listing Dexscreener dalam satu alur transaksi.
+
+Metric KunciTargetTarget HackathonBags.fm Hackathon - Dana $4M, kategori AppsTech StackNext.js 14, Node.js, Anchor (Solana), Python AIIntegrasi APIBags API, Helius RPC, Birdeye, Meteora, PrivyTimeline MVP4 sprint @ 1 minggu (28 hari total)User TargetToken creator, trader, DeFi enthusiast di ekosistem SolanaRevenue ModelFee dari partner config + premium alerts subscription
+2. Problem Statement
+2.1 Latar Belakang
+Bags.fm telah muncul sebagai salah satu launchpad token tercepat berkembang di ekosistem Solana, di mana kreator mendapatkan 1% dari setiap trade. Namun, terdapat kesenjangan signifikan antara kapabilitas teknis platform dan pengalaman pengguna yang tersedia.
+
+2.2 Pain Points yang Diidentifikasi
+2.2.1 Untuk Token Creator
+• Tidak ada tools untuk memproyeksikan pendapatan fee sharing berdasarkan volume historis dan antisipasi.
+• Konfigurasi fee share bersifat manual dan membutuhkan pemahaman teknis mendalam tentang Solana PDA.
+• Tidak ada visibilitas real-time atas accumulated fees yang siap di-claim.
+• Proses launch token terpisah dari konfigurasi monetisasi, menyebabkan friction yang tinggi.
+
+2.2.2 Untuk Trader & Investor
+• Feed token launch di Bags.fm tidak menyertakan sinyal kualitas atau risk scoring.
+• Tidak ada cara untuk membedakan token dengan potensi tinggi dari token rug-pull secara cepat.
+• Data on-chain dari Helius dan price data dari Birdeye tersebar, tidak teraggregasi.
+• Alert system untuk entry/exit points tidak tersedia secara native.
+
+2.2.3 Untuk Developer & Partner
+• Bags Partner API belum banyak dimanfaatkan karena kurangnya contoh implementasi nyata.
+• Tidak ada dashboard untuk memantau performa referral dan partner revenue secara terpusat.
+
+2.3 Opportunity Gap
+Berdasarkan analisis terhadap Bags API documentation, tersedia 30+ endpoint yang belum dimanfaatkan secara maksimal oleh aplikasi manapun. Bags Signal hadir untuk menjadi aplikasi pertama yang mengintegrasikan seluruh surface area API Bags.fm menjadi satu platform kohesif.
+
+3. Goals & Objectives
+3.1 Tujuan Utama
+#ObjectiveKey ResultPrioritas1Meningkatkan fee share utilizationCreator rata-rata mengklaim 90%+ dari accumulated fees dalam 30 hariP0 - Critical2Memberikan signal kualitas tokenSignal accuracy > 70% berdasarkan 7-day price movement post-launchP0 - Critical3Mempercepat token launch workflowWaktu launch berkurang dari rata-rata 15 menit menjadi < 3 menitP1 - High4Membangun partner ecosystem10+ partner terdaftar melalui Partner Config API dalam masa hackathonP1 - High5Real-time market intelligenceAlert latency < 5 detik dari event on-chain ke notifikasi userP2 - Medium6Developer adoptionDokumentasi API wrapper tersedia & di-fork > 50xP2 - Medium
+3.2 Kriteria Sukses Hackathon
+Untuk memenangkan Bags.fm Hackathon, project harus memenuhi minimal 3 dari 5 kriteria berikut:
+• Inovasi dalam mekanisme fee sharing yang belum ada sebelumnya.
+• Integrasi mendalam dengan minimal 3 partner API (Helius, Birdeye, Meteora).
+• User experience yang dapat digunakan oleh non-technical user.
+• Demonstrasi live dengan transaksi nyata di Solana mainnet/devnet.
+• Potensi revenue model yang berkelanjutan pasca-hackathon.
+
+4. User Personas
+4.1 Persona 1: "The Token Creator" - Rani
+ProfilKreator konten crypto, 28 tahun, aktif di Twitter/X dengan 15K followersTujuan UtamaMeluncurkan token komunitas dan menghasilkan passive income dari fee tradingPain PointTidak tahu cara mengoptimalkan konfigurasi fee share dan tidak bisa track revenue secara mudahTech SavvyMedium - familiar dengan wallet Phantom, tapi tidak bisa codingEkspektasiAntarmuka sederhana, estimasi pendapatan yang jelas, proses launch cepatFitur KunciFee Optimizer, One-Click Launcher, Revenue Dashboard
+4.2 Persona 2: "The Alpha Hunter" - Dani
+ProfilTrader DeFi full-time, 24 tahun, menggunakan multiple tools setiap hariTujuan UtamaMenemukan token launches dengan potensi 10x sebelum orang lain masukPain PointHarus memeriksa 5+ tools secara manual untuk mendapatkan gambaran lengkap sebuah tokenTech SavvyHigh - bisa membaca on-chain data dan memahami AMM mechanicsEkspektasiData real-time, signal scoring yang akurat, alert instanFitur KunciSignal Feed, AI Scorer, Telegram/WebSocket Alerts, Trade Quote
+4.3 Persona 3: "The Developer/Partner" - Budi
+ProfilFull-stack Web3 developer, 31 tahun, membangun tools DeFi sebagai side projectTujuan UtamaMengintegrasikan Bags API ke dalam aplikasinya dan mendapatkan revenue dari partner configPain PointDokumentasi Bags API kurang contoh end-to-end, tidak ada SDK siap pakaiTech SavvyExpert - familiar dengan Anchor, web3.js, dan ReactEkspektasiTypeScript SDK, dokumentasi lengkap, partner dashboard yang transparanFitur KunciPartner Registry, Bags API SDK (open source), Partner Stats Dashboard
+5. Feature Requirements
+5.1 Feature Matrix
+FiturSprintPrioritasPersonaAPI BagsSignal Feed (Real-time token launches)Sprint 1P0 - Must HaveDaniToken Launch FeedAI Scoring Engine (Heuristic + ML)Sprint 1P0 - Must HaveDaniAnalyticsFee Share Optimizer & SimulatorSprint 2P0 - Must HaveRaniFee Share APIRevenue Dashboard (Lifetime Fees)Sprint 2P0 - Must HaveRaniAnalyticsOne-Click Token LauncherSprint 2P1 - HighRaniToken Launch TXAuto Fee Claim (Anchor Program)Sprint 3P1 - HighRaniFee ClaimingReal-time Alerts (WebSocket)Sprint 2P1 - HighDaniInternalTrade Quote & Swap InterfaceSprint 3P1 - HighDaniTrade APIPartner Registry & StatsSprint 3P2 - MediumBudiPartner APIDexscreener Auto-ListingSprint 3P2 - MediumRaniDexscreener APIAI Agent Auth (Autonomous Trading)Sprint 4P2 - MediumDaniAgent APIBags Pool AnalyticsSprint 4P3 - Nice to HaveDaniState API
+5.2 Spesifikasi Fitur Detail
+5.2.1 Signal Feed - Real-time Token Intelligence
+Signal Feed adalah halaman utama platform yang menampilkan aliran token launch terbaru dari Bags.fm disertai dengan skor kualitas dari AI engine.
+
+Komponen UI yang dibutuhkan:
+• Token card dengan nama, symbol, gambar, dan status (PRE_LAUNCH / LIVE).
+• Signal Score: badge berwarna (Hijau = 80+, Kuning = 50-79, Merah = <50).
+• Volume 24 jam dari Birdeye API, diupdate setiap 30 detik.
+• Liquidity depth dari Meteora pools.
+• Quick action: Trade, Watch, Share.
+• Filter: status, score range, volume minimum, tanggal launch.
+
+Endpoint Bags API yang digunakan:
+• GET /token-launch/feed - Feed utama token launches.
+• GET /token-launch/lifetime-fees?tokenMint=X - Fee historis per token.
+• GET /bags-pools - Informasi liquidity pool.
+
+5.2.2 AI Scoring Engine
+Scoring engine adalah layanan Python yang mengevaluasi setiap token secara otomatis menggunakan heuristik multi-faktor. Engine ini berjalan sebagai microservice terpisah yang dipanggil oleh backend Node.js.
+
+Faktor penilaian (total 100 poin):
+FaktorBobotDeskripsiLiquidity Depth25 poinTotal SOL dalam pool Meteora saat launch. > 50 SOL = skor penuh.Fee Share Config20 poinApakah creator telah mengkonfigurasi fee share dengan benar.Creator History20 poinTrack record creator: lifetime fees dari token sebelumnya.Volume Velocity15 poinRate kenaikan volume dalam 1 jam pertama setelah launch.Social Presence10 poinWebsite dan Twitter terisi, bukan placeholder.Price Stability10 poinVolatilitas harga dalam 1 jam pertama (rendah = lebih baik).
+5.2.3 Fee Share Optimizer
+Modul ini memungkinkan creator untuk mensimulasikan konfigurasi fee share terbaik berdasarkan target pendapatan dan volume trading yang diproyeksikan.
+
+Input dari user:
+• Estimasi volume trading harian (SOL atau USD).
+• Jumlah wallet penerima fee (creator + partner).
+• Target fee percentage yang diinginkan.
+
+Output yang ditampilkan:
+• Proyeksi pendapatan harian, mingguan, dan bulanan.
+• Perbandingan konfigurasi: Current vs Optimal.
+• Tombol "Apply Configuration" yang membuat transaksi Bags Fee Share Config langsung.
+• Estimasi gas cost untuk transaksi konfigurasi.
+
+Endpoint Bags API yang digunakan:
+• GET /fee-share/wallet?walletAddress=X - Cek konfigurasi fee share existing.
+• POST /fee-share/config - Buat transaksi konfigurasi fee share baru.
+• GET /token-launch/claim-stats?tokenMint=X - Statistik klaim historis.
+
+5.2.4 One-Click Token Launcher
+Fitur flagship yang memungkinkan creator meluncurkan token, mengkonfigurasi fee share, dan mendaftarkan ke Dexscreener dalam satu alur terintegrasi.
+
+Alur kerja (wizard 4 langkah):
+1. Langkah 1: Token Info: Nama, symbol, deskripsi, upload gambar, link Twitter & website.
+2. Langkah 2: Fee Configuration: Pilih persentase fee, tambah wallet penerima, preview pendapatan proyeksi.
+3. Langkah 3: Launch Settings: Initial buy amount (opsional), harga awal, slippage tolerance.
+4. Langkah 4: Review & Sign: Ringkasan semua setting, estimasi total gas, tombol "Launch Token".
+
+Endpoint Bags API yang digunakan:
+• POST /token-launch/info - Upload metadata token ke storage.
+• POST /token-launch/transaction - Buat transaksi launch.
+• POST /fee-share/config - Konfigurasi fee share bersamaan.
+• POST /dexscreener/order - Auto-submit listing Dexscreener.
+
+6. Technical Architecture
+6.1 Overview Stack
+LayerTeknologiFungsiFrontendNext.js 14 (App Router), TypeScript, Tailwind CSS, Framer MotionUI/UX, SSR, routingWalletPrivy + Wallet Adapter (Phantom, Backpack)Auth, signing transaksiBackend APINode.js 20, Express 5, TypeScriptREST API, business logicReal-timeWebSocket (ws library), Server-Sent EventsLive feed, alertsAI EnginePython 3.11, FastAPI, scikit-learn, pandasToken scoring microserviceBlockchainAnchor 0.30, Solana web3.js 2.xSmart contract, on-chain opsDatabasePostgreSQL 16 + Redis 7Persistent data + cacheDeploymentVercel (FE) + Railway (BE) + Helius RPCHosting infrastruktur
+6.2 Struktur Direktori Project
+bags-signal/ ├── frontend/                  # Next.js 14 App Router │   ├── app/ │   │   ├── dashboard/         # Halaman signal feed utama │   │   ├── launcher/          # Token launch wizard │   │   ├── optimizer/         # Fee share optimizer │   │   ├── portfolio/         # Portfolio & revenue tracker │   │   └── alerts/            # Alert management │   ├── components/ │   │   ├── SignalFeed.tsx │   │   ├── FeeSimulator.tsx │   │   ├── TokenLauncher.tsx │   │   ├── ScoreBadge.tsx │   │   └── WalletConnect.tsx │   └── lib/ │       ├── bags-client.ts     # Bags API wrapper │       └── solana.ts          # web3.js helpers ├── backend/                   # Node.js + Express │   ├── src/ │   │   ├── routes/            # REST endpoints │   │   ├── services/          # Business logic │   │   │   ├── bags.service.ts │   │   │   ├── helius.service.ts │   │   │   ├── birdeye.service.ts │   │   │   └── meteora.service.ts │   │   └── websocket/         # Real-time layer │   └── python/ │       └── scorer/            # FastAPI AI service │           ├── main.py │           ├── scorer.py      # Scoring logic │           └── models/        # ML model files └── program/                   # Anchor smart contract     └── programs/         └── bags-signal/       # ClaimRouter + PartnerRegistry             └── src/lib.rs
+
+6.3 Bags API Integration Map
+Endpoint Bags APIDigunakan OlehKeteranganGET /token-launch/feedSignal FeedPolling setiap 10 detik, cached di Redis 5 detikGET /token-launch/lifetime-feesRevenue DashboardPer-token, diquery saat user membuka detailGET /token-launch/claim-statsFee OptimizerStatistik klaim untuk hitung efisiensiGET /token-launch/claim-eventsRevenue DashboardRiwayat klaim per walletPOST /token-launch/infoToken LauncherUpload metadata sebelum transaksi launchPOST /token-launch/transactionToken LauncherTransaksi launch ke SolanaGET /fee-share/walletFee OptimizerCek config existing sebelum updatePOST /fee-share/wallet/bulkPortfolioBatch check untuk multiple tokensPOST /fee-share/configFee OptimizerBuat/update konfigurasi fee shareGET /fee-claiming/positionsRevenue DashboardPosisi claimable realtimePOST /fee-claiming/claim-v3Auto-ClaimGenerate transaksi klaim feesGET /trade/quoteSignal FeedPreview harga sebelum swapPOST /trade/swapSignal FeedExecute swap langsung dari feedGET /partner/statsPartner DashboardRevenue dari referralPOST /partner/configPartner RegistryDaftarkan partner baruPOST /dexscreener/orderToken LauncherAuto-listing setelah launchPOST /agent/auth-init & loginAI AgentAutentikasi agent walletGET /bags-poolsSignal FeedLiquidity data per token
+6.4 Smart Contract (Anchor Program)
+Bags Signal mengembangkan Anchor program kustom dengan dua instruksi utama:
+
+ClaimRouter - Auto Fee Claim
+• PDA menyimpan konfigurasi: tokenMint, feeClaimerVault, minClaimThreshold.
+• Instruksi claim_and_distribute: memanggil Bags fee claim lalu mendistribusikan ke multiple wallets secara atomik.
+• Guard: hanya bisa dieksekusi jika accumulated fees > minClaimThreshold (mencegah dust claims).
+
+PartnerRegistry - On-chain Partner Tracking
+• Menyimpan mapping: partnerWallet -> [referredTokens] on-chain.
+• Instruksi register_referral: mencatat setiap token yang dilaunched melalui Bags Signal.
+• Memungkinkan partner revenue tracking yang transparan dan tidak bisa dimanipulasi.
+
+7. User Stories & Acceptance Criteria
+7.1 Epic 1: Signal Feed
+IDUser StoryAcceptance CriteriaUS-01Sebagai trader, saya ingin melihat daftar token launch terbaru dengan skor kualitas agar bisa membuat keputusan trading cepat.Feed diupdate < 15 detik. Setiap token menampilkan skor 0-100 dengan warna indikator. Filter berjalan tanpa reload halaman.US-02Sebagai trader, saya ingin mendapatkan alert ketika token dengan skor > 80 dilaunched agar tidak ketinggalan opportunity.Alert muncul < 5 detik dari event on-chain. Alert berisi nama token, skor, dan link ke detail. User bisa set threshold sendiri.US-03Sebagai trader, saya ingin melihat trade quote langsung dari feed agar bisa execute swap tanpa berpindah halaman.Quote diperbarui realtime. Slippage ditampilkan. Konfirmasi transaksi menampilkan estimasi output.
+7.2 Epic 2: Fee Optimizer
+IDUser StoryAcceptance CriteriaUS-04Sebagai creator, saya ingin mensimulasikan pendapatan fee sebelum mengkonfigurasi agar bisa memilih setup terbaik.Simulasi menggunakan data historis volume token serupa. Output menampilkan proyeksi per hari/minggu/bulan. Akurasi estimasi dalam 20% dari aktual.US-05Sebagai creator, saya ingin mengklaim semua fees yang terkumpul dalam satu klik agar tidak perlu melakukan banyak transaksi.Tombol "Claim All" memproses semua claimable positions sekaligus. Gas diestimasi sebelum eksekusi. Konfirmasi berhasil dalam < 30 detik.US-06Sebagai creator, saya ingin melihat berapa total fees yang sudah saya hasilkan dari semua token agar bisa mengukur performa.Dashboard menampilkan total lifetime fees dalam SOL dan USD. Breakdown per token tersedia. Data realtime dari Bags Analytics API.
+7.3 Epic 3: Token Launcher
+IDUser StoryAcceptance CriteriaUS-07Sebagai creator, saya ingin meluncurkan token dengan fee share dikonfigurasi sekaligus agar tidak perlu dua transaksi terpisah.Wizard 4 langkah selesai < 3 menit. Fee share otomatis terkonfigurasi bersamaan dengan launch. Konfirmasi on-chain dalam < 60 detik.US-08Sebagai creator, saya ingin token saya otomatis terdaftar di Dexscreener setelah launch agar mendapat visibilitas segera.Order Dexscreener dibuat otomatis pasca-launch. Status order ditampilkan di dashboard. Waktu listing Dexscreener < 5 menit.
+8. Sprint Plan & Timeline
+8.1 Roadmap Overview
+SprintNamaDeliverablesDurasiSprint 1Foundation & Core BackendBags API client, Signal Engine (Python), Express server, WebSocket layer, Signal Feed frontend7 hariSprint 2Fee Intelligence & DashboardFee Optimizer UI, Revenue Dashboard, One-Click Launcher (step 1-2), Alert System7 hariSprint 3Launch & Partner EcosystemToken Launcher (step 3-4), Dexscreener integration, Partner Registry, Trade interface7 hariSprint 4On-chain Program & PolishAnchor ClaimRouter, Agent Auth, UI polish, testing, deployment, demo prep7 hari
+8.2 Sprint 1 - Detail Tasks
+Minggu 1: Foundation & Core Backend
+#TaskAssigneeEst.1Setup monorepo: Next.js + Express + Anchor + Python FastAPIFull Team0.5 hari2Implement Bags API TypeScript client dengan semua endpointBackend Dev1 hari3Build Signal Feed endpoint: polling + Redis cacheBackend Dev0.5 hari4Develop Python AI Scorer (heuristic v1, 6 faktor)AI/Python Dev2 hari5Frontend: Signal Feed page dengan token cards + skor badgeFrontend Dev1.5 hari6WebSocket server untuk live updatesBackend Dev0.5 hari7Wallet connection dengan PrivyFrontend Dev0.5 hari8Deploy preview ke Vercel + RailwayDevOps0.5 hari
+9. Non-Functional Requirements
+9.1 Performance
+• Signal Feed latency: < 500ms dari request ke render pertama.
+• AI Scoring latency: < 2 detik per token (cached setelah score pertama).
+• WebSocket alert delivery: < 5 detik dari event on-chain.
+• Trade Quote refresh: setiap 3 detik secara otomatis.
+• API rate limiting: max 100 request/menit per wallet address.
+
+9.2 Security
+• API key Bags.fm disimpan hanya di server-side, tidak pernah di-expose ke frontend.
+• Semua transaksi Solana ditandatangani client-side (private key tidak pernah meninggalkan wallet user).
+• Input sanitization untuk semua form, mencegah XSS dan injection.
+• HTTPS enforced di semua endpoint. CORS dikonfigurasi ketat hanya untuk domain produksi.
+• Rate limiting berbasis IP untuk endpoint publik.
+
+9.3 Reliability & Availability
+• Target uptime: 99.5% selama periode hackathon dan demo.
+• Fallback ke Helius RPC cadangan jika primary timeout.
+• Redis cache memastikan Signal Feed tetap berfungsi meski Bags API momentarily down.
+• Error boundary di semua React component - UI tidak blank saat partial failure.
+
+9.4 Scalability
+• Backend stateless, bisa di-scale horizontal dengan mudah di Railway.
+• Redis digunakan untuk rate limiting dan session data - tidak bergantung pada in-memory state.
+• Database query dioptimalkan dengan index pada tokenMint dan walletAddress.
+
+9.5 Accessibility & UX
+• Responsive design: full functionality di mobile (320px) hingga desktop (1920px).
+• Dark mode dan light mode didukung secara native via Tailwind.
+• Loading states pada semua async operations - tidak ada blank screen.
+• Error messages bersifat actionable (bukan hanya "Something went wrong").
+
+10. Risk Register & Mitigation
+#RisikoLikelihoodImpactMitigasiR1Bags API rate limit terlampaui saat load tinggiMediumHighImplementasi Redis cache agresif (TTL 5-30 detik), exponential backoff retry, request batching untuk bulk endpoints.R2AI Scorer accuracy rendah pada minggu pertamaMediumMediumMulai dengan heuristic rules yang deterministik. Labeling data dari hasil nyata untuk iterasi model ML di sprint 4.R3Helius RPC downtime atau lambatLowHighKonfigurasi 2 endpoint RPC (Helius + backup publik). Circuit breaker pattern dengan timeout 3 detik.R4Kompleksitas Anchor program melebihi kapasitas sprintMediumMediumClaimRouter bisa digantikan sementara dengan transaksi manual via Bags Claim API. Program menjadi enhancement, bukan blocker demo.R5Birdeye atau Meteora API berubahLowMediumAbstraksi setiap provider di balik interface TypeScript. Jika satu provider gagal, data dari provider lain masih ditampilkan dengan label yang jelas.R6Deadline hackathon submission tidak cukup waktuMediumHighPrioritas ketat: Signal Feed + Fee Optimizer harus selesai Sprint 1-2. Sprint 3-4 adalah enhancement. Demo siap di akhir Sprint 2.
+11. Success Metrics & KPIs
+11.1 KPI Hackathon (Jangka Pendek)
+KPITarget MinimumTarget IdealTimeframeJumlah Bags API endpoint terintegrasi10 endpoint18+ endpointSubmissionSignal Accuracy (prediksi vs aktual 7D)> 60%> 75%SubmissionToken sukses dilaunched via platform1 token live5+ tokenSubmissionWaktu launch token (wizard)< 5 menit< 2 menitSubmissionUptime selama periode demo> 95%> 99%Demo DayResponse waktu API backend< 1 detik< 300msDemo Day
+11.2 KPI Produk (Jangka Panjang Pasca-Hackathon)
+• Monthly Active Users (MAU): 500 dalam 30 hari pertama pasca-launch.
+• Total fees yang di-track: > 1,000 SOL dalam 60 hari.
+• Token yang dilaunched via platform: > 50 token dalam 60 hari.
+• Partner yang terdaftar: > 20 partner aktif dalam 90 hari.
+• Revenue platform (dari partner config fee): > $5,000 dalam 90 hari.
+
+12. Dependencies & External Services
+ServicePeranTier / CostCatatanBags.fm APICore data & transactionsHackathon creditsAPI key dari dev.bags.fm - sudah tersediaHelius RPCSolana on-chain dataFree tier (100 req/s)Daftar di helius.dev, tersedia credits hackathonBirdeye APIPrice & volume dataFree tier (30 req/min)Mendukung token baru dalam 1 jam setelah launchMeteoraLiquidity pool dataPublic API gratisDLMM pool data untuk liquidity scoringPrivyWallet authenticationFree tierSocial login + embedded wallet untuk onboarding mudahVercelFrontend hostingHobby plan gratisDeploy otomatis dari GitHub pada setiap pushRailwayBackend hosting$5 credit gratisNode.js + Python service dalam satu projectPostgreSQLDatabase utamaRailway managedUntuk menyimpan token history & user preferencesRedisCache & rate limitingRailway managedTTL 5-30 detik untuk API responses
+13. Appendix
+13.1 Glossary
+IstilahDefinisiBags.fmPlatform launchpad token di Solana di mana creator mendapat 1% dari setiap trade token yang diluncurkan.Fee ShareMekanisme distribusi fee trading kepada creator, holder, atau partner yang dikonfigurasi saat launch atau setelahnya.Signal ScoreNilai 0-100 yang dihitung oleh AI engine Bags Signal untuk menilai kualitas dan potensi sebuah token launch.LMSRLogarithmic Market Scoring Rule - mekanisme AMM yang digunakan Bags.fm untuk pricing awal token.PDAProgram Derived Address - account di Solana yang dikontrol oleh smart program, bukan private key.ClaimRouterSmart contract Anchor yang mengotomasi proses klaim dan distribusi fees kepada multiple penerima.Helius RPCNode provider Solana premium yang digunakan Bags Signal untuk query on-chain data secara real-time.DBC PoolDynamic Bonding Curve pool - pool likuiditas yang dibuat otomatis saat token launch di Bags.fm.SprintPeriode pengerjaan 7 hari dengan deliverable yang jelas. Total 4 sprint untuk MVP Bags Signal.
+13.2 Referensi
+• Bags.fm API Documentation: https://docs.bags.fm
+• Bags Developer Dashboard: https://dev.bags.fm
+• Bags Hackathon: https://bags.fm/hackathon/apps
+• Helius Documentation: https://docs.helius.dev
+• Anchor Framework: https://anchor-lang.com
+• Birdeye API: https://docs.birdeye.so
+• Meteora DLMM: https://docs.meteora.ag
+
+13.3 Revision History
+VersiTanggalAuthorPerubahanv1.0.0April 2026Bags Signal TeamInitial draft - complete PRD untuk Bags.fm Hackathon submission.
+Bags Signal - Confidential & Proprietary - Bags.fm Hackathon 2026
+BAGS SIGNAL - Product Requirements Document	v1.0.0 | April 2026
+
+Bags Signal | Bags.fm Hackathon 2026	Halaman 1
+
