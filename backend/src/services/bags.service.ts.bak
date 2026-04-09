@@ -1,0 +1,18 @@
+﻿import axios, { AxiosError, AxiosInstance } from 'axios';
+import { logger } from '../utils/logger';
+import { RedisCache } from './redis.service';
+import { config } from '../utils/config';
+
+export interface TokenLaunch {
+  tokenMint: string;
+  name: string;
+  symbol: string;
+  imageUrl?: string;
+  status: 'PRE_LAUNCH' | 'LIVE';
+  bagsStatus: 'PRE_LAUNCH' | 'PRE_GRAD' | 'MIGRATING' | 'MIGRATED';
+  launchTime: string;
+  creatorWallet: string;
+  twitter?: string | null;
+  website?: string | null;
+  volume24h?: number;
+}
